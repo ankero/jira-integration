@@ -17,12 +17,6 @@ const exchangeCodeToToken = (code) => {
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
   };
-
-  console.log(JSON.stringify(body))
-
-  // Object.keys(params).forEach((key) =>
-  //   url.searchParams.append(key, params[key]),
-  // );
   return fetch(`${AUTH_BASE_URL}/oauth/token`, {
     method: "POST",
     body: JSON.stringify(body),
@@ -32,8 +26,6 @@ const exchangeCodeToToken = (code) => {
   })
     .then((res) => res.json())
     .then((data) => {
-      console.log("RESPONSE")
-      console.log(JSON.stringify(data))
       if (data.error) {
         throw new Error(JSON.stringify(data.error));
       }
@@ -44,48 +36,23 @@ const exchangeCodeToToken = (code) => {
     });
 };
 
-const getAuthorizedSites = async (accessToken) => {
+const useRefreshToken = async (user, auth) => {
+  // TODO
+};
+
+const getAccessibleResources = async (auth) => {  
   const url = new URL(`${BASE_URL}/oauth/token/accessible-resources`);
   const options = {
     method: "GET",
-    headers: { Authorization: `Bearer ${accessToken}`, "Accept": "application/json", },
+    headers: { Authorization: `Bearer ${auth.accessToken}`, "Accept": "application/json", },
   };
 
-  const tickets = await fetch(url, options);
-  return await tickets.json();
-};
-
-const createNewTicket = async (accessToken, input) => {
-  const url = new URL(`${BASE_URL}/api/v2/tickets.json`);
-  const options = {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  };
-
-  const newTicket = await fetch(url, options);
-  return newTicket.json();
-};
-
-const fetchUserById = async (id, accessToken) => {
-  const url = new URL(`${BASE_URL}/api/v2/users/${id}`);
-  const options = {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  };
-
-  const user = await fetch(url, options);
-  return await user.json();
+  const response = await fetch(url, options);  
+  const result = await response.json()  
+  return result;
 };
 
 module.exports = {
   exchangeCodeToToken,
-  getAuthorizedSites,
-  createNewTicket,
-  fetchUserById,
+  getAccessibleResources
 };

@@ -1,18 +1,15 @@
 const { encryptToken, decryptToken } = require("./services/encryption");
 const { saveAuth, getAuth } = require("./services/firestore");
 
-const storeToken = async (user, origin, token ) => {
+const storeToken = async (user, origin, token) => {
   const encryptedToken = await encryptToken(user, token);
-  console.log("Store token", encryptedToken)
   await saveAuth(user, origin, encryptedToken)
 };
 
-const getToken = async (user, origin) => {
-  const data = await getAuth(user, origin)
-  console.log(data)
-  const decryptedToken = await decryptToken(user, data.encryptToken);
-  console.log(decryptedToken)
-  return decryptedToken
+const getToken = async (user, incomingOrigin) => {
+  const { auth, origin } = await getAuth(user, incomingOrigin)  
+  const token = await decryptToken(user, auth);
+  return { origin, token };
 }
 
 module.exports = { storeToken, getToken };

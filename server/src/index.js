@@ -4,9 +4,9 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const oauthBegin = require("./controllers/oauthBegin");
 const asyncwrapper = require("./middlewares/asyncwrapper");
-const { verifyZendeskAuth } = require("./middlewares/zendeskAuth");
+const { verifyJiraAuth } = require("./middlewares/jiraAuth");
 const oauthCallback = require("./controllers/oauthCallback");
-const { getTickets, createTicket } = require("./controllers/tickets");
+const { getTickets, createTicket, accessibleResources } = require("./controllers/tickets");
 const { verifyHappeoAuth } = require("./middlewares/happeoAuth");
 
 const app = express();
@@ -23,9 +23,9 @@ app.get("/oauth/begin", asyncwrapper(oauthBegin));
 
 app.get("/oauth/callback", asyncwrapper(oauthCallback));
 
-app.get("/tickets", verifyHappeoAuth, verifyZendeskAuth, asyncwrapper(getTickets));
+app.get("/accessible-resources", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(accessibleResources));
 
-app.post("/tickets", verifyHappeoAuth, verifyZendeskAuth, asyncwrapper(createTicket));
+app.post("/tickets", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(createTicket));
 
 app.use(function (req, res, next) {
   res.set("Cache-control", "no-cache");

@@ -19,7 +19,7 @@ const createSecret = async (user) => {
   const existingSecret = await getSecret(user)
 
   if (existingSecret) {
-    return secretId;
+    return existingSecret;
   }
 
   const secretKey = crypto.randomBytes(64).toString("hex")

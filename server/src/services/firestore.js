@@ -54,7 +54,7 @@ const saveAuth = async (user, origin, encryptedAuth) => {
 
 const getAuth = async (user, origin) => {
   const collection = firestore.collection(AUTH_COLLECTION);
-  const encodedOrigin = Buffer.from(origin).toString("base64");
+  const encodedOrigin = Buffer.from(origin).toString("base64");  
   const doc = collection.doc(`${user.id}_${encodedOrigin}`)
   const snapshot = await doc.get()
   if (!snapshot.exists) {

@@ -3,12 +3,11 @@ const { verifySharedToken } = require("../services/jwt");
 const verifyHappeoAuth = (req, res, next) => {
   try {
     const token = req.headers.authorization.split("Bearer ")[1];
-    const verifiedToken = verifySharedToken(token);
+    const user = verifySharedToken(token);
 
-    res.locals.user = {
-      ...verifiedToken.user,
-      organisationId: verifiedToken.organisation.id,
-    };
+    console.log(`Request for userId:${user.id} organisationId:${user.organisationId}`);
+
+    res.locals.user = user;
 
     next();
   } catch (e) {
