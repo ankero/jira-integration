@@ -3,14 +3,17 @@
   "description": "Happeo Zendesk identity service",
   "version": "1.0.0",
   "scripts": {
-    "start": "nodemon src/index.js",
-    "deploy": "gcloud builds submit --tag gcr.io/{YOUR GCP PROJECT URL HERE}"
+    "start": "NODE_ENV='local' nodemon src/index.js",
+    "deploy": "gcloud builds submit --tag gcr.io/happeo-jira-integration/jira-integration"
   },
   "dependencies": {
+    "@google-cloud/secret-manager": "^3.10.1",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
+    "crypto-js": "^4.1.1",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "firebase-admin": "^9.11.1",
     "http-errors": "^1.8.0",
     "jsonwebtoken": "^8.5.1",
     "node-fetch": "^2.6.1",
@@ -18,7 +21,8 @@
   },
   "devDependencies": {
     "concurrently": "^6.2.1",
-    "nodemon": "^2.0.12"
+    "nodemon": "^2.0.12",
+    "prettier": "^2.4.0"
   },
   "engines": {
     "node": ">= 12.0.0",

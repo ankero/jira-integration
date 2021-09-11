@@ -2,7 +2,7 @@ const {
   fetchTickets,
   createNewTicket,
   fetchUserById,
-} = require("../services/zendesk");
+} = require("../services/atlassian");
 const { getToken } = require("../store");
 
 const getTickets = async (req, res, next) => {

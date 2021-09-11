@@ -1,21 +1,43 @@
 const jwt = require("jsonwebtoken");
+const { createStateToken } = require("./firestore");
 
-const SHARED_SECRET =  process.env.SHARED_SECRET
+const SHARED_SECRET = process.env.SHARED_SECRET || "test";
 
-function createToken(data) {
-  return jwt.sign(data, SHARED_SECRET, { expiresIn: "5min" });
+function createInternalToken(data) {
+  return jwt.sign(data, SHARED_SECRET, { expiresIn: "2min" });
 }
 
 function verifySharedToken(token) {
-  try {
-    return jwt.verify(token, SHARED_SECRET);
+  try {    
+    const data = jwt.verify(token, SHARED_SECRET);
+    if (data.id) {
+      return data;
+    }
+
+    return {
+      id: data.user.id,
+      organisationId: data.organisation.id
+    }
+
   } catch (error) {
-    console.log(error);
+    throw error;
+  }
+}
+
+function generateStateToken(token, origin) {
+  try {
+    return createStateToken({
+      token,
+      origin
+    })
+
+  } catch (error) {
     throw error;
   }
 }
 
 module.exports = {
-  createToken,
+  createInternalToken,
   verifySharedToken,
+  generateStateToken
 };

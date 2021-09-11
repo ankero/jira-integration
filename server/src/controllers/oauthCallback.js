@@ -1,7 +1,8 @@
-const { getHappeoRedirectUrl } = require("../services/happeo");
 const { verifySharedToken } = require("../services/jwt");
-const { exchangeCodeToToken } = require("../services/zendesk");
+const { exchangeCodeToToken } = require("../services/atlassian");
 const { storeToken } = require("../store");
+const { getStateTokenById } = require("../services/firestore");
+const { OAUTH_CALLBACK_AFTER_REDIRECT_URL } = require("../constants");
 
 /**
  * Callback of Zendesk OAuth process.
@@ -11,8 +12,8 @@ const { storeToken } = require("../store");
  */
 module.exports = async function oauthCallback(req, res) {
   const { code, state, error } = req.query;
-
-  const verifiedToken = verifySharedToken(state);
+  const { token, origin } = await getStateTokenById(state);
+  const user = verifySharedToken(token);
 
   try {
     if (error) {
@@ -21,15 +22,18 @@ module.exports = async function oauthCallback(req, res) {
     }
 
     const token = await exchangeCodeToToken(code);
-    storeToken(verifiedToken, token);
+
+    // Store token to storage as encrypted string
+    // Encryption key is generated per user
+    await storeToken(user, origin, token);
 
     res.redirect(
-      `${getHappeoRedirectUrl(state, token, code).href}&success=true`,
+      `${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=true`,
     );
   } catch (err) {
-    console.log(e);
+    console.log(err);
     res.redirect(
-      `${getHappeoRedirectUrl(state, token, code).href}&success=false`,
+      `${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=false`,
     );
   }
 };

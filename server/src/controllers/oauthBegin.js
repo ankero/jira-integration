@@ -1,10 +1,12 @@
+const { BadRequest } = require("http-errors");
 const {
-  BASE_URL,
   CLIENT_ID,
   OAUTH_CALLBACK_URL,
   SCOPES,
+  AUTH_BASE_URL,
 } = require("../constants");
-const { verifySharedToken } = require("../services/jwt");
+const { createStateToken } = require("../services/firestore");
+const { verifySharedToken, createToken, createInternalToken } = require("../services/jwt");
 
 /**
  * Callback of Zendesk OAuth process. Drawbridge does not authenticate the user because of custom domains.
@@ -14,16 +16,32 @@ const { verifySharedToken } = require("../services/jwt");
  * @param {*} res
  */
 module.exports = async function oauthBegin(req, res) {
-  const { token } = req.query;
+  const { token, origin } = req.query;
 
-  verifySharedToken(token);
+  if (!token) {
+    throw new BadRequest("token_missing")
+  }
 
-  const authorize = new URL(`${BASE_URL}/oauth/authorizations/new`);
-  authorize.searchParams.append("response_type", "code");
+  if (!origin) {
+    throw new BadRequest("origin_missing")
+  }
+
+  // Verify token gotten from Happeo
+  const user = verifySharedToken(token);
+
+  // Create new token that is valid for only 2 mins
+  const newToken = createInternalToken(user);
+
+  const stateToken = await createStateToken({ token: newToken, origin });
+
+  const authorize = new URL(`${AUTH_BASE_URL}/authorize`);
+  authorize.searchParams.append("audience", "api.atlassian.com");
   authorize.searchParams.append("client_id", CLIENT_ID);
-  authorize.searchParams.append("redirect_uri", OAUTH_CALLBACK_URL);
-  authorize.searchParams.append("state", token);
   authorize.searchParams.append("scope", SCOPES);
-
+  authorize.searchParams.append("redirect_uri", OAUTH_CALLBACK_URL);
+  authorize.searchParams.append("state", stateToken);
+  authorize.searchParams.append("response_type", "code");
+  authorize.searchParams.append("prompt", "consent");
+  console.log(authorize)
   res.redirect(authorize);
 };

@@ -18,10 +18,19 @@
   <body>
     <div class="container">
       <h1>
-        Zendesk has been setup successfully 🎉 You can now start using Zendesk
-        with Happeo
+        Jira authorization successfull.
       </h1>
-      <p>You can now close this window.</p>
+      <p>This window will close automatically.</p>
     </div>
   </body>
+  <script>
+    // The auth flow should be opened in a popup window
+    // The popup will be gicen the function _h, which sends the state to the 
+    setTimeout(()=>{
+        const parent = window.opener;
+        if (parent._h) {
+          parent._h("#{state}");
+        }
+      }, 10);
+  </script>
 </html>
