@@ -46,22 +46,32 @@ const getStateTokenById = async (id) => {
 }
 
 const saveAuth = async (user, origin, encryptedAuth) => {
-  const collection = firestore.collection(AUTH_COLLECTION);
-  const encodedOrigin = Buffer.from(origin).toString("base64");
-  const doc = collection.doc(`${user.id}_${encodedOrigin}`)
-  await doc.set({ user, origin, auth: encryptedAuth })
+  try {
+    const collection = firestore.collection(AUTH_COLLECTION);
+    const encodedOrigin = Buffer.from(origin).toString("base64");
+    const doc = collection.doc(`${user.id}_${encodedOrigin}`)
+    await doc.set({ user, origin, auth: encryptedAuth })
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 const getAuth = async (user, origin) => {
-  const collection = firestore.collection(AUTH_COLLECTION);
-  const encodedOrigin = Buffer.from(origin).toString("base64");  
-  const doc = collection.doc(`${user.id}_${encodedOrigin}`)
-  const snapshot = await doc.get()
-  if (!snapshot.exists) {
-    throw new Unauthorized("token_not_found");
-  }
+  try {
+    const collection = firestore.collection(AUTH_COLLECTION);
+    const encodedOrigin = Buffer.from(origin).toString("base64");
+    const doc = collection.doc(`${user.id}_${encodedOrigin}`)
+    const snapshot = await doc.get()
+    if (!snapshot.exists) {
+      throw new Unauthorized("token_not_found");
+    }
 
-  return snapshot.data()
+    return snapshot.data();
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 module.exports = {

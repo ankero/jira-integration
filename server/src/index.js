@@ -10,8 +10,9 @@ const { accessibleResources, search } = require("./controllers/jira");
 const { verifyHappeoAuth } = require("./middlewares/happeoAuth");
 const { initKeyRing } = require("./services/kms");
 const { initAtlassian } = require("./services/atlassian");
+const { initJWT } = require("./services/jwt");
 
-Promise.all([initKeyRing(), initAtlassian()]).then(() => {  
+Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {  
   const app = express();
   app.use(cors());
   app.use(cookieParser());

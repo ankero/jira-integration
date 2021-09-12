@@ -132,29 +132,34 @@ async function encryptSymmetric(keyName, dataToEncrypt) {
 }
 
 async function decryptSymmetric(keyName, ciphertext) {
-  const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, keyName)
-  const ciphertextCrc32c = crc32c.calculate(ciphertext);
+  try {
+    const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, keyName)
+    const ciphertextCrc32c = crc32c.calculate(ciphertext);
 
-  const [decryptResponse] = await client.decrypt({
-    name,
-    ciphertext: ciphertext,
-    ciphertextCrc32c: {
-      value: ciphertextCrc32c,
-    },
-  });
+    const [decryptResponse] = await client.decrypt({
+      name,
+      ciphertext: ciphertext,
+      ciphertextCrc32c: {
+        value: ciphertextCrc32c,
+      },
+    });
 
-  // Optional, but recommended: perform integrity verification on decryptResponse.
-  // For more details on ensuring E2E in-transit integrity to and from Cloud KMS visit:
-  // https://cloud.google.com/kms/docs/data-integrity-guidelines
-  if (
-    crc32c.calculate(decryptResponse.plaintext) !==
-    Number(decryptResponse.plaintextCrc32c.value)
-  ) {
-    throw new Error('Decrypt: response corrupted in-transit');
+    // Optional, but recommended: perform integrity verification on decryptResponse.
+    // For more details on ensuring E2E in-transit integrity to and from Cloud KMS visit:
+    // https://cloud.google.com/kms/docs/data-integrity-guidelines
+    if (
+      crc32c.calculate(decryptResponse.plaintext) !==
+      Number(decryptResponse.plaintextCrc32c.value)
+    ) {
+      throw new Error('Decrypt: response corrupted in-transit');
+    }
+
+    const plaintext = decryptResponse.plaintext.toString();
+    return plaintext;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  const plaintext = decryptResponse.plaintext.toString();
-  return plaintext;
 }
 
 module.exports = {

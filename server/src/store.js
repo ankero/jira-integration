@@ -7,7 +7,7 @@ const storeToken = async (user, origin, token) => {
 };
 
 const getToken = async (user, incomingOrigin) => {
-  const now = Date.now();
+  const now = Date.now();  
   const { auth, origin } = await getAuth(user, incomingOrigin)  
   console.log(`Getting auth took: ${Date.now() - now}ms`);
   const decryptNow = Date.now();
