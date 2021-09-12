@@ -9,7 +9,11 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET || "HtCzUhRcHRN72yQheB-5LJnpF31l
 
 const SCOPES = "read:jira-user read:jira-work offline_access";
 
-const SECRETS_PROJECT = "projects/happeo-jira-integration"
+const KMS_LOCATION = "europe-west1";
+const PROJECT_NAME = "happeo-jira-integration"
+const SECRETS_PROJECT = `projects/${PROJECT_NAME}`
+const KEYRING_NAME = "token_keys";
+const KEYRING_ADDRESS = `projects/${PROJECT_NAME}/locations/${KMS_LOCATION}/keyRings/${KEYRING_NAME}`;
 
 const OAUTH_CALLBACK_AFTER_REDIRECT_URL =
   process.env.OAUTH_CALLBACK_AFTER_REDIRECT_URL || "/oauth/result";
@@ -24,5 +28,9 @@ module.exports = {
   SCOPES,
   OAUTH_CALLBACK_AFTER_REDIRECT_URL,
   AUTH_BASE_URL,
-  SECRETS_PROJECT
+  PROJECT_NAME,
+  SECRETS_PROJECT,
+  KMS_LOCATION,
+  KEYRING_NAME,
+  KEYRING_ADDRESS
 };

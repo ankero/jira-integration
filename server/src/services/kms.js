@@ -1,0 +1,171 @@
+const { KeyManagementServiceClient } = require('@google-cloud/kms');
+const { PROJECT_NAME, KMS_LOCATION, KEYRING_NAME } = require('../constants');
+const { NODE_ENV } = process.env
+const DAY_IN_SECONDS = 3600 * 24;
+const ROTATION_DAYS = 30 * 3;// 3 months
+const ROTATION_PERIOD = DAY_IN_SECONDS * ROTATION_DAYS
+
+const client = new KeyManagementServiceClient({
+  ...(NODE_ENV === "local" ? {
+    credentials: require("../../.secrets/service-account.json")
+  } : {})
+});
+const locationName = client.locationPath(PROJECT_NAME, KMS_LOCATION);
+const keyRingLocation = keyRingName = client.keyRingPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME);
+const crc32c = require('fast-crc32c');
+
+const { BadRequest } = require('http-errors');
+
+async function getKeyRing() {
+  try {
+    const [keyRing] = await client.getKeyRing({
+      name: keyRingLocation
+    });
+
+    return keyRing;
+  } catch (error) {    
+    if (error.code === 5) {
+      // Not found > create new key ring
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function createKeyRing() {
+  try {
+    const [keyRing] = await client.createKeyRing({
+      parent: locationName,
+      keyRingId: KEYRING_NAME,
+    });
+
+    console.log(`[Encryption] Created new key ring: ${keyRing.name}`);
+    return keyRing;
+  } catch (error) {
+    console.log(error)
+    throw error;
+  }
+}
+
+async function initKeyRing() {
+  const existingKeyRing = await getKeyRing();
+  if (existingKeyRing) {
+    console.log("[Encryption] Key ring ready");
+    return;
+  }
+
+  await createKeyRing();
+  console.log("[Encryption] Key ring ready");
+}
+
+async function getCryptoKey(cryptoKeyId) {
+  try {
+    const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, cryptoKeyId)
+  const [key] = await client.getCryptoKey({
+    name
+  });
+  console.log(key)
+  return key;  
+  } catch (error) {
+    if (error.code === 5) {
+      // Not found > create new key ring
+      return null;
+    }
+    console.log(error)
+    throw error;
+  }
+  
+}
+
+async function createKeySymmetricEncryptDecrypt(cryptoKeyId) {
+  const [key] = await client.createCryptoKey({
+    parent: keyRingLocation,
+    cryptoKeyId,    
+    cryptoKey: {
+      rotationPeriod: {
+        seconds: ROTATION_PERIOD
+      },
+      nextRotationTime: {
+        seconds: Date.now() / 1000 + ROTATION_PERIOD,
+      },
+      purpose: 'ENCRYPT_DECRYPT',
+      versionTemplate: {
+        algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
+      },
+    },
+  });
+
+  console.log(`[Encryption] Created symmetric key: ${key.name}`);
+  return key;
+}
+
+async function encryptSymmetric(keyName, dataToEncrypt) {
+  if (typeof dataToEncrypt !== "string") {
+    throw new BadRequest("only_string_allowed")
+  }
+
+  const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, keyName)
+  const plaintextBuffer =  Buffer.from(dataToEncrypt)
+  const plaintextCrc32c = crc32c.calculate(plaintextBuffer);
+  const [encryptResponse] = await client.encrypt({    
+    name,
+    plaintext: plaintextBuffer,
+    plaintextCrc32c: {
+      value: plaintextCrc32c,
+    },
+  });
+
+  const ciphertext = encryptResponse.ciphertext;
+
+  // Optional, but recommended: perform integrity verification on encryptResponse.
+  // For more details on ensuring E2E in-transit integrity to and from Cloud KMS visit:
+  // https://cloud.google.com/kms/docs/data-integrity-guidelines
+  if (!encryptResponse.verifiedPlaintextCrc32c) {
+    throw new Error('Encrypt: request corrupted in-transit');
+  }
+  if (
+    crc32c.calculate(ciphertext) !==
+    Number(encryptResponse.ciphertextCrc32c.value)
+  ) {
+    throw new Error('Encrypt: response corrupted in-transit');
+  }
+
+  console.log(`Ciphertext: ${ciphertext.toString('base64')}`);
+  return ciphertext;
+}
+
+async function decryptSymmetric(keyName, ciphertext) {
+  const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, keyName)
+  const ciphertextCrc32c = crc32c.calculate(ciphertext);
+
+  const [decryptResponse] = await client.decrypt({
+    name,
+    ciphertext: ciphertext,
+    ciphertextCrc32c: {
+      value: ciphertextCrc32c,
+    },
+  });
+
+  // Optional, but recommended: perform integrity verification on decryptResponse.
+  // For more details on ensuring E2E in-transit integrity to and from Cloud KMS visit:
+  // https://cloud.google.com/kms/docs/data-integrity-guidelines
+  if (
+    crc32c.calculate(decryptResponse.plaintext) !==
+    Number(decryptResponse.plaintextCrc32c.value)
+  ) {
+    throw new Error('Decrypt: response corrupted in-transit');
+  }
+
+  const plaintext = decryptResponse.plaintext.toString();
+
+  console.log(`Plaintext: ${plaintext}`);
+  return plaintext;
+}
+
+module.exports = {
+  initKeyRing,
+  getCryptoKey,
+  createKeySymmetricEncryptDecrypt,
+  encryptSymmetric,
+  decryptSymmetric
+}

@@ -6,46 +6,49 @@ const oauthBegin = require("./controllers/oauthBegin");
 const asyncwrapper = require("./middlewares/asyncwrapper");
 const { verifyJiraAuth } = require("./middlewares/jiraAuth");
 const oauthCallback = require("./controllers/oauthCallback");
-const { getTickets, createTicket, accessibleResources } = require("./controllers/tickets");
+const { accessibleResources } = require("./controllers/tickets");
 const { verifyHappeoAuth } = require("./middlewares/happeoAuth");
+const { initKeyRing } = require("./services/kms");
 
-const app = express();
-app.use(cors());
-app.use(cookieParser());
-app.use(express.json());
-app.use(
-  express.urlencoded({
-    extended: true,
-  }),
-);
+Promise.all([initKeyRing()]).then(() => {  
+  const app = express();
+  app.use(cors());
+  app.use(cookieParser());
+  app.use(express.json());
+  app.use(
+    express.urlencoded({
+      extended: true,
+    }),
+  );
 
-app.get("/oauth/begin", asyncwrapper(oauthBegin));
+  app.get("/oauth/begin", asyncwrapper(oauthBegin));
 
-app.get("/oauth/callback", asyncwrapper(oauthCallback));
+  app.get("/oauth/callback", asyncwrapper(oauthCallback));
 
-app.get("/accessible-resources", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(accessibleResources));
+  app.get("/accessible-resources", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(accessibleResources));
 
-app.post("/tickets", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(createTicket));
+  // app.post("/tickets", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(createTicket));
 
-app.use(function (req, res, next) {
-  res.set("Cache-control", "no-cache");
-  next();
-});
+  app.use(function (req, res, next) {
+    res.set("Cache-control", "no-cache");
+    next();
+  });
 
-// Serve any static files
-app.use("/public", express.static(path.join(__dirname, "public")));
+  // Serve any static files
+  app.use("/public", express.static(path.join(__dirname, "public")));
 
-app.get("/oauth/result", function (req, res) {
-  const { success } = req.query;
+  app.get("/oauth/result", function (req, res) {
+    const { success } = req.query;
 
-  if (success === "true") {
-    res.sendFile(path.join(__dirname, "./public/success.html"));
-  } else {
-    res.sendFile(path.join(__dirname, "./public/error.html"));
-  }
-});
+    if (success === "true") {
+      res.sendFile(path.join(__dirname, "./public/success.html"));
+    } else {
+      res.sendFile(path.join(__dirname, "./public/error.html"));
+    }
+  });
 
-const port = process.env.PORT || 8081;
-app.listen(port, () => {
-  console.log(`Custom widget example: listening on port ${port}`);
-});
+  const port = process.env.PORT || 8081;
+  app.listen(port, () => {
+    console.log(`Custom widget example: listening on port ${port}`);
+  });
+})
