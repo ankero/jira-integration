@@ -42,7 +42,7 @@ async function createKeyRing() {
     console.log(`[Encryption] Created new key ring: ${keyRing.name}`);
     return keyRing;
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw error;
   }
 }
@@ -70,7 +70,7 @@ async function getCryptoKey(cryptoKeyId) {
       // Not found > create new key ring
       return null;
     }
-    console.log(error)
+    console.error(error)
     throw error;
   }
 

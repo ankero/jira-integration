@@ -10,8 +10,8 @@ const verifyHappeoAuth = (req, res, next) => {
     res.locals.user = user;
 
     next();
-  } catch (e) {
-    res.status(401).send();
+  } catch (error) {
+    next(error)
   }
 };
 

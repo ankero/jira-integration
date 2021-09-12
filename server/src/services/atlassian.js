@@ -1,3 +1,4 @@
+const { Unauthorized, BadRequest } = require("http-errors");
 const fetch = require("node-fetch");
 const {
   OAUTH_CALLBACK_URL,
@@ -6,6 +7,7 @@ const {
   AUTH_BASE_URL,
   CLIENT_SECRET_KEY,
 } = require("../constants");
+const { storeToken } = require("../store");
 const { getSecret } = require("./secretManager");
 
 let secrets = {
@@ -39,21 +41,88 @@ const exchangeCodeToToken = (code) => {
     });
 };
 
-const useRefreshToken = async (user, auth) => {
-  // TODO
+const getNewToken = async ({auth}) => {
+  const body = {    
+    grant_type: "refresh_token",
+    refresh_token: auth.refresh_token,
+    ...secrets
+  };
+  return fetch(`${AUTH_BASE_URL}/oauth/token`, {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.error) {
+        throw new Error(JSON.stringify(data.error));
+      }
+      return data;
+    })
+    .catch((error) => {
+      throw error;
+    });
+}
+
+const useRefreshToken = async (locals) => {
+  if (locals.refreshed) {
+    throw new Unauthorized("retry_limit_exceeded")
+  }
+  console.log(`[Atlassian] Refreshing token for user ${locals.user.id}`);
+  const token = await getNewToken(locals);
+  await storeToken(locals.user, locals.origin, token);
+  return {
+    ...locals,
+    auth: token,
+    refreshed: true
+  }
 };
 
-const getAccessibleResources = async (auth) => {  
+const getAccessibleResources = async (locals)=> {
+  const { auth } =  locals;
+  
   const url = new URL(`${BASE_URL}/oauth/token/accessible-resources`);
   const options = {
     method: "GET",
-    headers: { Authorization: `Bearer ${auth.accessToken}`, "Accept": "application/json", },
+    headers: { Authorization: `Bearer ${auth.access_token}`, "Accept": "application/json", },
   };
 
-  const response = await fetch(url, options);  
-  const result = await response.json()  
+  const response = await fetch(url, options);
+  const result = await response.json()
+
+  if (result.code === 401 && locals.auth.refresh_token) {
+    const newLocals = await useRefreshToken(locals);
+    return await getAccessibleResources(newLocals)
+  }
+
   return result;
 };
+
+const searchWithJql = async (locals, params) => {
+  const { auth } =  locals;
+
+  if (!params.resourceId) {
+    throw new BadRequest("missing_parameter: 'resourceId'")
+  }
+
+  const url = new URL(`${BASE_URL}/ex/jira/${params.resourceId}/rest/api/2/search?jql=${params.jql || ""}`);
+  const options = {
+    method: "GET",
+    headers: { Authorization: `Bearer ${auth.access_token}`, "Accept": "application/json", },
+  };
+
+  const response = await fetch(url, options);
+  const result = await response.json()
+
+  if (result.code === 401 && locals.auth.refresh_token) {
+    const newLocals = await useRefreshToken(locals);
+    return await searchWithJql(newLocals, params)
+  }
+
+  return result;
+}
 
 const initAtlassian = async () => {
   try {
@@ -68,5 +137,6 @@ const initAtlassian = async () => {
 module.exports = {
   initAtlassian,
   exchangeCodeToToken,
-  getAccessibleResources
+  getAccessibleResources,
+  searchWithJql
 };

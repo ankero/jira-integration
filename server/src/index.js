@@ -6,7 +6,7 @@ const oauthBegin = require("./controllers/oauthBegin");
 const asyncwrapper = require("./middlewares/asyncwrapper");
 const { verifyJiraAuth } = require("./middlewares/jiraAuth");
 const oauthCallback = require("./controllers/oauthCallback");
-const { accessibleResources } = require("./controllers/tickets");
+const { accessibleResources, search } = require("./controllers/jira");
 const { verifyHappeoAuth } = require("./middlewares/happeoAuth");
 const { initKeyRing } = require("./services/kms");
 const { initAtlassian } = require("./services/atlassian");
@@ -28,9 +28,9 @@ Promise.all([initKeyRing(), initAtlassian()]).then(() => {
 
   app.get("/accessible-resources", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(accessibleResources));
 
-  // app.post("/tickets", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(createTicket));
+  app.get("/search", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(search));
 
-  app.use(function (req, res, next) {
+  app.use(function (_req, res, next) {
     res.set("Cache-control", "no-cache");
     next();
   });
@@ -46,6 +46,10 @@ Promise.all([initKeyRing(), initAtlassian()]).then(() => {
     } else {
       res.sendFile(path.join(__dirname, "./public/error.html"));
     }
+  });
+
+  app.use((err, _req, res, _next) => {
+    res.status(err.status || 500).send(err.message)
   });
 
   const port = process.env.PORT || 8081;

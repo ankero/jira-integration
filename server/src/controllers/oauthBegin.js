@@ -42,6 +42,6 @@ module.exports = async function oauthBegin(req, res) {
   authorize.searchParams.append("state", stateToken);
   authorize.searchParams.append("response_type", "code");
   authorize.searchParams.append("prompt", "consent");
-  console.log(authorize)
+  
   res.redirect(authorize);
 };

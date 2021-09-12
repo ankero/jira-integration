@@ -1,34 +1,40 @@
 const { Unauthorized } = require("http-errors");
 const { getToken } = require("../store");
+
 const verifyJiraAuth = async (req, res, next) => {
   try {
     const { origin } = req.headers;
     const { user } = res.locals;
 
+    if (!origin) {
+      throw new Unauthorized("invalid_xrfs");
+    }
+
     const { origin: savedOrigin, token } = await getToken(user, origin);
-    
-    if (!origin || !token) {
+
+    if (!origin || !token) {
       throw new Unauthorized("authorization_missing");
     }
 
     if (savedOrigin !== origin) {
-      throw new Unauthorized("origin_mismatch");
+      throw new Unauthorized("invalid_xrfs");
     }
 
-    const { access_token: accessToken, refresh_token: refreshToken } = token || {};
-    
-    if (!accessToken && !refreshToken) {
+    const { access_token, refresh_token } = token || {};
+
+    if (!access_token && !refresh_token) {
       throw new Unauthorized("authorization_missing");
     }
 
     res.locals.auth = {
-      accessToken,
-      refreshToken
+      access_token,
+      refresh_token
     };
+    res.locals.origin = origin;
 
     next();
-  } catch (e) {
-    res.status(401).send();
+  } catch (error) {
+    next(error)
   }
 };
 
