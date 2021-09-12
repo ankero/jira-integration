@@ -50,7 +50,7 @@ const saveAuth = async (user, origin, encryptedAuth) => {
     const collection = firestore.collection(AUTH_COLLECTION);
     const encodedOrigin = Buffer.from(origin).toString("base64");
     const doc = collection.doc(`${user.id}_${encodedOrigin}`)
-    await doc.set({ user, origin, auth: encryptedAuth })
+    await doc.set({ userId: user.id, origin, auth: encryptedAuth })
   } catch (error) {
     console.error(error);
     throw error;

@@ -9,10 +9,11 @@ export const parseStringJSON = (string = "", defaultVal) => {
   }
 };
 
-export const get = (url, { body, token, ...customConfig } = {}) => {
+export const get = (url, { body, params, token, ...customConfig } = {}) => {
+  const resourceUrl = new URL(url)
   const headers = { "Content-Type": "application/json" };
   const config = {
-    method: body ? "POST" : "GET",
+    method: "GET",
     ...customConfig,
     headers: {
       ...headers,
@@ -20,16 +21,21 @@ export const get = (url, { body, token, ...customConfig } = {}) => {
       Authorization: `Bearer ${token}`,
     },
   };
-
+  if (params) {
+    Object.keys(params).forEach(key => resourceUrl.searchParams.append(key, params[key]))
+  }
   if (body) {
     config.body = JSON.stringify(body);
   }
-  return window.fetch(url, config).then(async (response) => {
+  return window.fetch(resourceUrl, config).then(async (response) => {
     if (response.ok) {
       return await response.json();
     } else {
-      const errorMessage = await response.text();
-      return Promise.reject(new Error(errorMessage));
+      let message = await response.text();
+      if (response.status === 401) {
+        message = "unauthorized"
+      }      
+      return Promise.reject(new Error(message));
     }
   });
 };

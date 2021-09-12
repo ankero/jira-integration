@@ -1,1 +1,1 @@
-export { default as TicketList } from "./TicketList";
+export { default as IssueList } from "./IssueList";

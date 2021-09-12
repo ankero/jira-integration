@@ -107,7 +107,7 @@ const searchWithJql = async (locals, params) => {
     throw new BadRequest("missing_parameter: 'resourceId'")
   }
 
-  const url = new URL(`${BASE_URL}/ex/jira/${params.resourceId}/rest/api/2/search?jql=${params.jql || ""}`);
+  const url = new URL(`${BASE_URL}/ex/jira/${params.resourceId}/rest/api/2/search?jql=${params.jql || ""}&maxResults=${params.maxResults || 10}`);
   const options = {
     method: "GET",
     headers: { Authorization: `Bearer ${auth.access_token}`, "Accept": "application/json", },

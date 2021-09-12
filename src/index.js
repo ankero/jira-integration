@@ -1,5 +1,5 @@
 import React from "react";
-import ZendeskWidget from "./ZendeskWidget";
+import JiraWidget from "./JiraWidget";
 
 class happeoCustomReactWidget extends HTMLElement {
   connectedCallback() {
@@ -7,13 +7,13 @@ class happeoCustomReactWidget extends HTMLElement {
     const mode = this.getAttribute("mode") || "";
     
     ReactDOM.render(
-      <ZendeskWidget id={uniqueId} editMode={mode === "edit"} />,
+      <JiraWidget id={uniqueId} editMode={mode === "edit"} />,
       this
     );
   }
 }
 
-const slug = "add-your-slug-here";
+const slug = "jiraissues-iguqcpwt3vtrpqsouzeu";
 
 window.customElements.get(slug) ||
   window.customElements.define(slug, happeoCustomReactWidget);
