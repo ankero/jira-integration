@@ -7,42 +7,21 @@ const getKeyNameForOrganisation = user => `org_key_${user.organisationId || "ge
 
 const encryptToken = async (user, token) => {
   const keyName = getKeyNameForOrganisation(user)
-  const cryptoKey = await getCryptoKey(keyName);
-  console.log("CRYPTO KEY", cryptoKey)
+  const cryptoKey = await getCryptoKey(keyName);  
   if (!cryptoKey) {
     await createKeySymmetricEncryptDecrypt(keyName)
   }
-  const cipher = await encryptSymmetric(keyName, JSON.stringify(token))
-  return cipher;
-
-  // const secret = await createSecret(user);
-  // const cipher = CryptoJS.AES.encrypt(JSON.stringify(token), secret).toString();
-  // return cipher;
+  return await encryptSymmetric(keyName, JSON.stringify(token))
 }
 
-const decryptToken = async (user, cipher) => {
-  try {
+const decryptToken = async (user, cipher) => {  
+  try {    
     const keyName = getKeyNameForOrganisation(user)
     const plaintext = await decryptSymmetric(keyName, cipher)  
-    return JSON.parse(plaintext);
+    return JSON.parse(plaintext)
   } catch (error) {
-    console.log(error);
     throw error;
   }
-  
-
-  // const secret = await getSecret(user)
-
-  // if (!secret) {
-  //   throw new BadRequest("no_encryption_key");
-  // }
-  // try {
-  //   const bytes = CryptoJS.AES.decrypt(cipher, secret);
-  //   const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-  //   return decryptedData;
-  // } catch (error) {
-  //   throw new InternalServerError()
-  // }
 }
 
 module.exports = {

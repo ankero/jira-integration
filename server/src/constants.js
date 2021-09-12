@@ -5,7 +5,7 @@ const AUTH_BASE_URL = "https://auth.atlassian.com"
 
 // Atlassian developer OAuth client id & secret
 const CLIENT_ID = process.env.CLIENT_ID || "n1KOcR6G986BkCLr81dvjfT6iQ4pwFhR";
-const CLIENT_SECRET = process.env.CLIENT_SECRET || "HtCzUhRcHRN72yQheB-5LJnpF31led9let8SOWSYhZQECqXyurTKB9tuy7_S2osZ";
+const CLIENT_SECRET_KEY = "jira-client-secret"
 
 const SCOPES = "read:jira-user read:jira-work offline_access";
 
@@ -23,7 +23,7 @@ const OAUTH_CALLBACK_URL = process.env.OAUTH_CALLBACK_URL || "http://localhost:8
 module.exports = {
   BASE_URL,
   CLIENT_ID,
-  CLIENT_SECRET,
+  CLIENT_SECRET_KEY,
   OAUTH_CALLBACK_URL,
   SCOPES,
   OAUTH_CALLBACK_AFTER_REDIRECT_URL,

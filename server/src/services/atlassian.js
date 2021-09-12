@@ -2,20 +2,23 @@ const fetch = require("node-fetch");
 const {
   OAUTH_CALLBACK_URL,
   CLIENT_ID,
-  CLIENT_SECRET,
-  SCOPES,
   BASE_URL,
   AUTH_BASE_URL,
+  CLIENT_SECRET_KEY,
 } = require("../constants");
+const { getSecret } = require("./secretManager");
+
+let secrets = {
+  client_id: CLIENT_ID,
+  client_secret: null
+}
 
 const exchangeCodeToToken = (code) => {
-  // const url = new URL(`${AUTH_BASE_URL}/oauth/token`);
   const body = {
     code,
     grant_type: "authorization_code",
     redirect_uri: OAUTH_CALLBACK_URL,
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    ...secrets
   };
   return fetch(`${AUTH_BASE_URL}/oauth/token`, {
     method: "POST",
@@ -52,7 +55,18 @@ const getAccessibleResources = async (auth) => {
   return result;
 };
 
+const initAtlassian = async () => {
+  try {
+    const clientSecret = await getSecret(CLIENT_SECRET_KEY)
+    secrets.client_secret = clientSecret;
+    console.log("[Atlassian] api keys ready");
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
+  initAtlassian,
   exchangeCodeToToken,
   getAccessibleResources
 };

@@ -23,7 +23,7 @@ async function getKeyRing() {
     });
 
     return keyRing;
-  } catch (error) {    
+  } catch (error) {
     if (error.code === 5) {
       // Not found > create new key ring
       return null;
@@ -61,11 +61,10 @@ async function initKeyRing() {
 async function getCryptoKey(cryptoKeyId) {
   try {
     const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, cryptoKeyId)
-  const [key] = await client.getCryptoKey({
-    name
-  });
-  console.log(key)
-  return key;  
+    const [key] = await client.getCryptoKey({
+      name
+    });
+    return key;
   } catch (error) {
     if (error.code === 5) {
       // Not found > create new key ring
@@ -74,13 +73,13 @@ async function getCryptoKey(cryptoKeyId) {
     console.log(error)
     throw error;
   }
-  
+
 }
 
 async function createKeySymmetricEncryptDecrypt(cryptoKeyId) {
   const [key] = await client.createCryptoKey({
     parent: keyRingLocation,
-    cryptoKeyId,    
+    cryptoKeyId,
     cryptoKey: {
       rotationPeriod: {
         seconds: ROTATION_PERIOD
@@ -105,9 +104,9 @@ async function encryptSymmetric(keyName, dataToEncrypt) {
   }
 
   const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, keyName)
-  const plaintextBuffer =  Buffer.from(dataToEncrypt)
+  const plaintextBuffer = Buffer.from(dataToEncrypt)
   const plaintextCrc32c = crc32c.calculate(plaintextBuffer);
-  const [encryptResponse] = await client.encrypt({    
+  const [encryptResponse] = await client.encrypt({
     name,
     plaintext: plaintextBuffer,
     plaintextCrc32c: {
@@ -129,8 +128,6 @@ async function encryptSymmetric(keyName, dataToEncrypt) {
   ) {
     throw new Error('Encrypt: response corrupted in-transit');
   }
-
-  console.log(`Ciphertext: ${ciphertext.toString('base64')}`);
   return ciphertext;
 }
 
@@ -157,8 +154,6 @@ async function decryptSymmetric(keyName, ciphertext) {
   }
 
   const plaintext = decryptResponse.plaintext.toString();
-
-  console.log(`Plaintext: ${plaintext}`);
   return plaintext;
 }
 

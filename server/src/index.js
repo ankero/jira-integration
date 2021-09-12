@@ -9,8 +9,9 @@ const oauthCallback = require("./controllers/oauthCallback");
 const { accessibleResources } = require("./controllers/tickets");
 const { verifyHappeoAuth } = require("./middlewares/happeoAuth");
 const { initKeyRing } = require("./services/kms");
+const { initAtlassian } = require("./services/atlassian");
 
-Promise.all([initKeyRing()]).then(() => {  
+Promise.all([initKeyRing(), initAtlassian()]).then(() => {  
   const app = express();
   app.use(cors());
   app.use(cookieParser());
