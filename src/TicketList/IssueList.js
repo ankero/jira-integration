@@ -8,53 +8,17 @@ import {
 import { searchIssues } from "../actions";
 import LoadingIssues from "./LoadingIssues";
 import Issue from "./Issue"
-import { ORDER_BY_REGEX } from "../constants";
+import { AVAILABLE_COLUMNS, DEFAULT_COLUMNS, ORDER_BY_REGEX, SETTINGS_KEYS } from "../constants";
+import ColumnsFilter from "./ColumnsFilter";
 
-const HEADERS = [
-  {
-    name: "T",
-    field: "issuetype",
-    width: "10%",
-    sortable: true
-  },
-  {
-    name: "Key",
-    field: "key",
-    width: "10%",
-    sortable: true
-  },
-  {
-    name: "Summary",
-    field: "summary",
-    width: "30%",
-    sortable: true
-  },
-  {
-    name: "P",
-    field: "priority",
-    width: "10%",
-    sortable: true
-  },
-  {
-    name: "Created",
-    field: "created",
-    width: "20%",
-    sortable: true
-  },
-  {
-    name: "Assignee",
-    field: "assignee",
-    width: "20%",
-    sortable: true
-  },
-];
 
-const IssueList = ({ widgetApi, settings, rootUrl }) => {
+const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
   const [issues, setIssues] = useState([]);
   const [sortDir, setSortDir] = useState("asc");
   const [sortField, setSortField] = useState("");
+  const [selectedColumns, setSelectedColumns] = useState(settings.selectedColumns && settings.selectedColumns !== "" ? JSON.parse(settings.selectedColumns) : DEFAULT_COLUMNS)
 
   useEffect(() => {
     let mounted = true;
@@ -69,7 +33,7 @@ const IssueList = ({ widgetApi, settings, rootUrl }) => {
         }
 
         const token = await widgetApi.getJWT();
-        const result = await searchIssues(token, { jql: settings.jql || "", resourceId: settings.resourceId, maxResults: settings.maxResults || 10 });
+        const result = await searchIssues(token, { jql: settings.jql || "", resourceId: settings.resourceId, maxResults: settings.maxResults || 10 });
         if (mounted) setIssues(result);
       } catch (error) {
         if (mounted) setError(true);
@@ -120,6 +84,12 @@ const IssueList = ({ widgetApi, settings, rootUrl }) => {
     setSortField(fieldKey);
   }
 
+  const onChangeFilter = data => {
+    setSelectedColumns(data);
+    const newSettings = { ...settings, [SETTINGS_KEYS.selectedColumns]: JSON.stringify(data) };
+    widgetApi.setSettings(newSettings);
+  }
+
   if (error) {
     return <div>Something went wrong</div>;
   }
@@ -129,14 +99,30 @@ const IssueList = ({ widgetApi, settings, rootUrl }) => {
   }
 
   return (
-    <ListStripedContainer style={{ flex: 1 }}>
-      <>
-        <ListHeader headers={HEADERS} sortDir={sortDir} sortField={sortField} sortFn={setSort} />
-        {issues.map((issue) => <Issue key={issue.id} issue={issue} rootUrl={rootUrl} />)}
-      </>
-    </ListStripedContainer>
+    <StyledListStripedContainer style={{ flex: 1 }} selectedColumns={selectedColumns}>
+      {editMode && (<Header>
+        <ColumnsFilter onChangeFilter={onChangeFilter} selectedColumns={selectedColumns} />
+      </Header>)}
+      <ListHeader headers={AVAILABLE_COLUMNS.filter(({ field }) => selectedColumns.includes(field))} sortDir={sortDir} sortField={sortField} sortFn={setSort} />
+      {issues.map((issue) => <Issue key={issue.id} issue={issue} rootUrl={rootUrl} selectedColumns={selectedColumns} />)}
+    </StyledListStripedContainer>
   );
 };
+
+const Header = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const StyledListStripedContainer = styled(ListStripedContainer)`
+  > li {
+    display: grid;
+    grid-template-columns: ${({ selectedColumns }) => AVAILABLE_COLUMNS.filter(({ field }) => selectedColumns.includes(field)).map(({ gridWidth }) => gridWidth).join(" ")};
+    > div {
+      width: auto;
+    }
+  }
+`
 
 
 export default IssueList;
