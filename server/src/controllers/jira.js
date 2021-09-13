@@ -1,6 +1,7 @@
 const {
   getAccessibleResources,
   searchWithJql,
+  searchSuggestions,
 } = require("../services/atlassian");
 
 const accessibleResources = async (_req, res, next) => {
@@ -22,7 +23,18 @@ const search = async (req, res, next) => {
   }
 };
 
+const suggestions = async (req, res, next) => {
+  try {
+    const { query } = req;
+    const response = await searchSuggestions(res.locals, query);
+    res.send(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   accessibleResources,
   search,
+  suggestions,
 };

@@ -155,7 +155,7 @@ const searchWithJql = async (locals, params) => {
       params.resourceId
         ? `${BASE_URL}/ex/jira/${params.resourceId}`
         : locals.project.projectBaseUrl
-    }/rest/api/3/issue/picker`,
+    }/rest/api/3/search`,
   );
 
   url.searchParams.append("jql", params.jql || "");

@@ -6,7 +6,11 @@ const oauthBegin = require("./controllers/oauthBegin");
 const asyncwrapper = require("./middlewares/asyncwrapper");
 const { verifyJiraAuth } = require("./middlewares/jiraAuth");
 const oauthCallback = require("./controllers/oauthCallback");
-const { accessibleResources, search } = require("./controllers/jira");
+const {
+  accessibleResources,
+  search,
+  suggestions,
+} = require("./controllers/jira");
 const { verifyHappeoAuth } = require("./middlewares/happeoAuth");
 const { initKeyRing } = require("./services/kms");
 const { initAtlassian } = require("./services/atlassian");
@@ -44,6 +48,13 @@ Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {
     verifyHappeoAuth,
     verifyJiraAuth,
     asyncwrapper(search),
+  );
+
+  app.get(
+    "/api/suggestions",
+    verifyHappeoAuth,
+    verifyJiraAuth,
+    asyncwrapper(suggestions),
   );
 
   app.use(function (_req, res, next) {

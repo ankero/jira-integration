@@ -30,6 +30,6 @@ module.exports = async function oauthCallback(req, res) {
     res.redirect(`/project-selector?token=${token}&origin=${origin}`);
   } catch (err) {
     console.log(err);
-    res.redirect(`${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=false`);
+    res.status(200).render("setup-failed");
   }
 };
