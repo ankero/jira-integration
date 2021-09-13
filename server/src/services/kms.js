@@ -20,7 +20,11 @@ const keyRingLocation = (keyRingName = client.keyRingPath(
 ));
 const crc32c = require("fast-crc32c");
 
-const { BadRequest } = require("http-errors");
+const {
+  BadRequest,
+  Unauthorized,
+  InternalServerError,
+} = require("http-errors");
 
 async function getKeyRing() {
   try {
@@ -34,7 +38,7 @@ async function getKeyRing() {
       // Not found > create new key ring
       return null;
     }
-    throw error;
+    throw new InternalServerError("keyring_not_found");
   }
 }
 
@@ -49,7 +53,7 @@ async function createKeyRing() {
     return keyRing;
   } catch (error) {
     console.error(error);
-    throw error;
+    throw new InternalServerError("cannot_create_keyring");
   }
 }
 
@@ -77,12 +81,12 @@ async function getCryptoKey(cryptoKeyId) {
     });
     return key;
   } catch (error) {
-    if (error.code === 5) {
+    if ([5, 9].includes(error.code)) {
       // Not found > create new key ring
       return null;
     }
     console.error(error);
-    throw error;
+    throw new Unauthorized("cannot_retreive_token");
   }
 }
 
@@ -135,13 +139,13 @@ async function encryptSymmetric(keyName, dataToEncrypt) {
   // For more details on ensuring E2E in-transit integrity to and from Cloud KMS visit:
   // https://cloud.google.com/kms/docs/data-integrity-guidelines
   if (!encryptResponse.verifiedPlaintextCrc32c) {
-    throw new Error("Encrypt: request corrupted in-transit");
+    throw new InternalServerError("Encrypt: request corrupted in-transit");
   }
   if (
     crc32c.calculate(ciphertext) !==
     Number(encryptResponse.ciphertextCrc32c.value)
   ) {
-    throw new Error("Encrypt: response corrupted in-transit");
+    throw new InternalServerError("Encrypt: response corrupted in-transit");
   }
   return ciphertext;
 }
@@ -171,14 +175,14 @@ async function decryptSymmetric(keyName, ciphertext) {
       crc32c.calculate(decryptResponse.plaintext) !==
       Number(decryptResponse.plaintextCrc32c.value)
     ) {
-      throw new Error("Decrypt: response corrupted in-transit");
+      throw new InternalServerError("Decrypt: response corrupted in-transit");
     }
 
     const plaintext = decryptResponse.plaintext.toString();
     return plaintext;
   } catch (error) {
     console.error(error);
-    throw error;
+    throw new Unauthorized("cannot_retreive_token");
   }
 }
 

@@ -111,10 +111,13 @@ const searchWithJql = async (locals, params) => {
   }
 
   const url = new URL(
-    `${BASE_URL}/ex/jira/${params.resourceId}/rest/api/2/search?jql=${
-      params.jql || ""
-    }&maxResults=${params.maxResults || 10}`,
+    `${BASE_URL}/ex/jira/${params.resourceId}/rest/api/2/search`,
   );
+
+  url.searchParams.append("jql", params.jql || "");
+  url.searchParams.append("maxResults", params.maxResults || 10);
+  url.searchParams.append("startAt", params.startAt || 0);
+
   const options = {
     method: "GET",
     headers: {
