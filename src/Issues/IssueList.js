@@ -21,7 +21,7 @@ import { ErrorMessage } from "../StateMessages";
 import { margin300, padding300 } from "@happeouikit/layout";
 import { white } from "@happeouikit/colors";
 
-const IssueList = ({ widgetApi, settings, query, rootUrl }) => {
+const IssueList = ({ widgetApi, settings, query, setUnauthorized }) => {
   const [loading, setLoading] = useState(true);
   const [onLoadingSort, setOnLoadingSort] = useState(false);
   const [error, setError] = useState();
@@ -31,6 +31,7 @@ const IssueList = ({ widgetApi, settings, query, rootUrl }) => {
   const [hasMore, setHasMore] = useState(false);
   const [sortDir, setSortDir] = useState("asc");
   const [sortField, setSortField] = useState("");
+  const [rootUrl, setRootUrl] = useState();
   const [selectedColumns, setSelectedColumns] = useState(
     settings.selectedColumns && settings.selectedColumns !== ""
       ? JSON.parse(settings.selectedColumns)
@@ -56,7 +57,6 @@ const IssueList = ({ widgetApi, settings, query, rootUrl }) => {
         const token = await widgetApi.getJWT();
         const result = await searchIssues(token, {
           jql,
-          resourceId: settings.resourceId,
           maxResults,
           startAt,
         });
@@ -69,15 +69,22 @@ const IssueList = ({ widgetApi, settings, query, rootUrl }) => {
               ),
             ).values(),
           ]);
+          setRootUrl(result._project.projectBaseUrl);
           setTotal(result.total);
           setHasMore(result.issues.length >= maxResults);
+          setLoading(false);
         }
       } catch (error) {
         if (mounted) {
-          setError(error);
+          if (error.message === "unauthorized") {
+            setUnauthorized(true);
+          } else {
+            widgetApi.reportError(error.message);
+            setError(error);
+            setLoading(false);
+          }
         }
       }
-      setLoading(false);
     };
 
     if (widgetApi) get();
@@ -106,7 +113,6 @@ const IssueList = ({ widgetApi, settings, query, rootUrl }) => {
       const token = await widgetApi.getJWT();
       const result = await searchIssues(token, {
         jql: jql.trim(),
-        resourceId: settings.resourceId,
         maxResults,
         startAt: 0,
       });
@@ -163,12 +169,14 @@ const IssueList = ({ widgetApi, settings, query, rootUrl }) => {
           {total > 0 ? ` (${total})` : ""}
         </TextEpsilon>
         <div style={{ display: "flex" }}>
-          <ButtonSecondary
-            style={{ marginRight: margin300 }}
-            icon={IconExternalLink}
-            text="Open Jira"
-            onClick={openJira}
-          />
+          {rootUrl && (
+            <ButtonSecondary
+              style={{ marginRight: margin300 }}
+              icon={IconExternalLink}
+              text="Open Jira"
+              onClick={openJira}
+            />
+          )}
           <ColumnsFilter
             onChangeFilter={onChangeFilter}
             selectedColumns={selectedColumns}

@@ -2,80 +2,25 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import widgetSDK from "@happeo/widget-sdk";
 
-import {
-  BASE_URL,
-  POPUP_PARAMS,
-  SETTINGS_KEYS,
-  WIDGET_LOCATION,
-  WIDGET_SETTINGS,
-} from "./constants";
+import { BASE_URL, POPUP_PARAMS } from "./constants";
 import { IssueList, LoadingIssues } from "./Issues";
-import { getAccessibleResources } from "./actions";
-import {
-  UnauthorizedMessage,
-  ErrorMessage,
-  SetupMessage,
-} from "./StateMessages";
+import { UnauthorizedMessage } from "./StateMessages";
 
 const JiraWidget = ({ id, editMode, query, location }) => {
   const [initialized, setInitialized] = useState(false);
   const [widgetApi, setWidgetApi] = useState();
   const [unauthorized, setUnauthorized] = useState(false);
-  const [accessibleResources, setAccessibleResources] = useState([]);
   const [settings, setSettings] = useState({});
-  const [error, setError] = useState(false);
 
   useEffect(() => {
     const doInit = async () => {
       const api = await widgetSDK.api.init(id);
       setWidgetApi(api);
       setInitialized(true);
+      api.declareSettings(settings, setSettings);
     };
     doInit();
   }, [editMode, id]);
-
-  useEffect(() => {
-    if (!widgetApi) {
-      return;
-    }
-    const settings = WIDGET_SETTINGS.map((item) => {
-      if (item.key !== SETTINGS_KEYS.resourceId) {
-        return item;
-      }
-      return {
-        ...item,
-        options: accessibleResources.map((item) => ({
-          label: item.name,
-          value: item.id,
-        })),
-      };
-    });
-
-    widgetApi.declareSettings(settings, setSettings);
-  }, [accessibleResources]);
-
-  useEffect(() => {
-    if (!initialized || !widgetApi) {
-      return;
-    }
-    setError(false);
-    const getResources = async () => {
-      try {
-        const token = await widgetApi.getJWT();
-        const items = await getAccessibleResources(token);
-        setAccessibleResources(items);
-      } catch (error) {
-        if (error.message === "unauthorized") {
-          setUnauthorized(true);
-          setInitialized(false);
-        } else {
-          setError(error.message);
-          widgetApi.reportError(error.message || "unknown error");
-        }
-      }
-    };
-    getResources();
-  }, [initialized]);
 
   const retryAuthorization = () => {
     setUnauthorized(false);
@@ -114,24 +59,12 @@ const JiraWidget = ({ id, editMode, query, location }) => {
     );
   }
 
-  if (error) {
-    return <ErrorMessage error={error} />;
-  }
-
-  const showLoader =
-    !initialized ||
-    (initialized && accessibleResources.length === 0 && !unauthorized);
-
-  if (showLoader) {
+  if (!initialized) {
     return (
       <Container>
         <LoadingIssues />
       </Container>
     );
-  }
-
-  if (initialized && !settings.resourceId) {
-    return <SetupMessage editMode={editMode} />;
   }
 
   return (
@@ -140,10 +73,8 @@ const JiraWidget = ({ id, editMode, query, location }) => {
         widgetApi={widgetApi}
         settings={settings}
         query={query}
-        rootUrl={
-          accessibleResources.find(({ id }) => id === settings.resourceId)?.url
-        }
         editMode={editMode}
+        setUnauthorized={setUnauthorized}
       />
     </Container>
   );

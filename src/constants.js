@@ -112,18 +112,6 @@ export const AVAILABLE_COLUMNS = [
 ];
 export const WIDGET_SETTINGS = [
   {
-    placeholder: "Select Jira site",
-    key: SETTINGS_KEYS.resourceId,
-    value: "",
-    options: [
-      {
-        label: "Select value",
-        value: null,
-      },
-    ],
-    type: "dropdown",
-  },
-  {
     placeholder: "Max results",
     key: "maxResults",
     value: 10,

@@ -17,7 +17,10 @@ const search = async (req, res, next) => {
   try {
     const { query } = req;
     const response = await searchWithJql(res.locals, query);
-    res.send(response);
+    res.send({
+      ...response,
+      _project: res.locals.project,
+    });
   } catch (error) {
     next(error);
   }
@@ -27,7 +30,10 @@ const suggestions = async (req, res, next) => {
   try {
     const { query } = req;
     const response = await searchSuggestions(res.locals, query);
-    res.send(response);
+    res.send({
+      ...response,
+      _project: res.locals.project,
+    });
   } catch (error) {
     next(error);
   }

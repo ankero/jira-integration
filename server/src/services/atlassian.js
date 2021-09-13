@@ -106,17 +106,15 @@ const getAccessibleResources = async (locals) => {
 const searchSuggestions = async (locals, params) => {
   const { auth, project = {} } = locals;
 
-  if (!params.resourceId && !project.projectBaseUrl) {
+  if (!params.resourceId && !project.projectId) {
     throw new BadRequest(
-      "missing_parameter: 'resourceId' or prop.projectBaseUrl not set",
+      "missing_parameter: 'resourceId' or prop.projectId not set",
     );
   }
 
   const url = new URL(
-    `${
-      params.resourceId
-        ? `${BASE_URL}/ex/jira/${params.resourceId}`
-        : project.projectBaseUrl
+    `${BASE_URL}/ex/jira/${
+      params.resourceId || project.projectId
     }/rest/api/3/issue/picker`,
   );
 
@@ -144,17 +142,15 @@ const searchSuggestions = async (locals, params) => {
 const searchWithJql = async (locals, params) => {
   const { auth, project } = locals;
 
-  if (!params.resourceId && !project.projectBaseUrl) {
+  if (!params.resourceId && !project.projectId) {
     throw new BadRequest(
-      "missing_parameter: 'resourceId' or prop.projectBaseUrl not set",
+      "missing_parameter: 'resourceId' or prop.projectId not set",
     );
   }
 
   const url = new URL(
-    `${
-      params.resourceId
-        ? `${BASE_URL}/ex/jira/${params.resourceId}`
-        : locals.project.projectBaseUrl
+    `${BASE_URL}/ex/jira/${
+      params.resourceId || project.projectId
     }/rest/api/3/search`,
   );
 
