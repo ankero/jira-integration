@@ -11,6 +11,7 @@ const { verifyHappeoAuth } = require("./middlewares/happeoAuth");
 const { initKeyRing } = require("./services/kms");
 const { initAtlassian } = require("./services/atlassian");
 const { initJWT } = require("./services/jwt");
+const projectSelector = require("./controllers/projectSelector");
 
 Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {
   const app = express();
@@ -23,9 +24,13 @@ Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {
     }),
   );
 
+  app.set("view engine", "pug");
+
   app.get("/oauth/begin", asyncwrapper(oauthBegin));
 
   app.get("/oauth/callback", asyncwrapper(oauthCallback));
+
+  app.get("/project-selector", asyncwrapper(projectSelector));
 
   app.get(
     "/api/accessible-resources",
@@ -51,7 +56,6 @@ Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {
 
   app.get("/oauth/result", function (req, res) {
     const { success } = req.query;
-
     if (success === "true") {
       res.sendFile(path.join(__dirname, "./public/success.html"));
     } else {

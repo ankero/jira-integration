@@ -18,7 +18,8 @@
     "http-errors": "^1.8.0",
     "jsonwebtoken": "^8.5.1",
     "node-fetch": "^2.6.1",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "pug": "^3.0.2"
   },
   "devDependencies": {
     "concurrently": "^6.2.1",

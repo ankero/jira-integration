@@ -59,6 +59,18 @@ const saveAuth = async (user, origin, encryptedAuth) => {
   }
 };
 
+const saveProject = async (user, origin, projectId, projectBaseUrl) => {
+  try {
+    const collection = firestore.collection(AUTH_COLLECTION);
+    const encodedOrigin = Buffer.from(origin).toString("base64");
+    const doc = collection.doc(`${user.id}_${encodedOrigin}`);
+    await doc.set({ projectId, projectBaseUrl }, { merge: true });
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 const getAuth = async (user, origin) => {
   try {
     const collection = firestore.collection(AUTH_COLLECTION);
@@ -81,4 +93,5 @@ module.exports = {
   getStateTokenById,
   saveAuth,
   getAuth,
+  saveProject,
 };

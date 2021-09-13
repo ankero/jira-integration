@@ -21,13 +21,13 @@ module.exports = async function oauthCallback(req, res) {
       return;
     }
 
-    const token = await exchangeCodeToToken(code);
+    const authToken = await exchangeCodeToToken(code);
 
     // Store token to storage as encrypted string
     // Encryption key is generated per user
-    await storeToken(user, origin, token);
+    await storeToken(user, origin, authToken);
 
-    res.redirect(`${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=true`);
+    res.redirect(`/project-selector?token=${token}&origin=${origin}`);
   } catch (err) {
     console.log(err);
     res.redirect(`${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=false`);

@@ -1,0 +1,22 @@
+head
+  meta(name="referrer" content="no-referrer")
+  meta(charset="utf-8")
+  meta(name="viewport" content="width=device-width, initial-scale=1, user-scalable=no")
+  title Success - Select project
+  style
+    include ./style.css
+  body
+    div(class="container")
+      if projectId
+        h1 Ready to rock 🎉
+        p Happeo Jira integration is now ready to use!
+        p You can now close this window.
+      else
+        h1 Authorization completed
+        p Please choose the project you want to use.
+      ul 
+        each item in accessibleResources
+          li(class=item.selected && "selected") 
+            a(href=item.selectUrl)
+              img(src=item.avatarUrl)
+              h2= item.name
