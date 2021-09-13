@@ -3,17 +3,19 @@ import styled from "styled-components";
 
 import widgetSDK from "@happeo/widget-sdk";
 import { SETTINGS_KEYS, WIDGET_SETTINGS } from "./constants";
+import { margin300, padding300 } from "@happeouikit/layout";
 
 import { IssueList } from "./TicketList";
 import { getAccessibleResources } from "./actions";
 import LoadingTickets from "./TicketList/LoadingIssues";
 import UnauthorizedMessage from "./UnauthorizedMessage";
+import { BodyUI, TextEpsilon } from "@happeouikit/typography";
 
 const JiraWidget = ({ id, editMode }) => {
   const [initialized, setInitialized] = useState(false);
   const [widgetApi, setWidgetApi] = useState();
   const [unauthorized, setUnauthorized] = useState(false);
-  const [accessibleResources, setAccessibleResources] = useState([])
+  const [accessibleResources, setAccessibleResources] = useState([]);
   const [settings, setSettings] = useState({});
 
   useEffect(() => {
@@ -29,18 +31,21 @@ const JiraWidget = ({ id, editMode }) => {
     if (!widgetApi) {
       return;
     }
-    const settings = WIDGET_SETTINGS.map(item => {
+    const settings = WIDGET_SETTINGS.map((item) => {
       if (item.key !== SETTINGS_KEYS.resourceId) {
         return item;
       }
       return {
         ...item,
-        options: accessibleResources.map(item => ({ label: item.name, value: item.id }))
-      }
-    })
+        options: accessibleResources.map((item) => ({
+          label: item.name,
+          value: item.id,
+        })),
+      };
+    });
 
     widgetApi.declareSettings(settings, setSettings);
-  }, [accessibleResources])
+  }, [accessibleResources]);
 
   useEffect(() => {
     if (!initialized || !widgetApi) {
@@ -54,13 +59,12 @@ const JiraWidget = ({ id, editMode }) => {
         setAccessibleResources(items);
       } catch (error) {
         if (error.message === "unauthorized") {
-          setUnauthorized(true)
+          setUnauthorized(true);
         }
       }
-
-    }
-    getResources()
-  }, [initialized])
+    };
+    getResources();
+  }, [initialized]);
 
   const startAuthorization = async () => {
     const token = await widgetApi.getJWT();
@@ -70,29 +74,63 @@ const JiraWidget = ({ id, editMode }) => {
     const popup = window.open(url, "auth", params);
 
     window._h = (status) => {
-      console.log(status)
+      console.log(status);
       popup.close();
       if (status === "success") {
         setUnauthorized(false);
       }
       window._h = null;
     };
+  };
 
+  const showLoader =
+    !initialized ||
+    (initialized && accessibleResources.length === 0 && !unauthorized);
+
+  if (showLoader) {
+    return (
+      <Container>
+        <LoadingTickets />
+      </Container>
+    );
   }
 
-  if (!initialized) {
-    // We don't want to show any loaders
-    return null;
+  if (initialized && unauthorized) {
+    return (
+      <Container>
+        <UnauthorizedMessage authorize={startAuthorization} />
+      </Container>
+    );
   }
 
-  const showLoader = !initialized || initialized && accessibleResources.length === 0 && !unauthorized;
+  if (initialized && !settings.resourceId) {
+    return (
+      <SetupMessage>
+        <TextEpsilon>Jira widget</TextEpsilon>
+        {editMode ? (
+          <BodyUI style={{ marginTop: margin300 }}>
+            Configure Jira widget from the right side panel.
+          </BodyUI>
+        ) : (
+          <BodyUI style={{ marginTop: margin300 }}>
+            This widget needs to be configured. Please open pages edit mode to
+            continue.
+          </BodyUI>
+        )}
+      </SetupMessage>
+    );
+  }
 
   return (
     <Container>
-      {showLoader && <LoadingTickets />}
-      {initialized && editMode && !settings.resourceId && <p>Select Jira site on the right side panel.</p>}
-      {initialized && unauthorized && <UnauthorizedMessage authorize={startAuthorization} />}
-      {!unauthorized && settings.resourceId && accessibleResources.length > 0 && <IssueList widgetApi={widgetApi} settings={settings} rootUrl={accessibleResources.find(({ id }) => id === settings.resourceId)?.url} editMode={editMode} />}
+      <IssueList
+        widgetApi={widgetApi}
+        settings={settings}
+        rootUrl={
+          accessibleResources.find(({ id }) => id === settings.resourceId)?.url
+        }
+        editMode={editMode}
+      />
     </Container>
   );
 };
@@ -101,6 +139,14 @@ const Container = styled.div`
   display: flex;
   flex: 1;
   min-height: 100px;
+`;
+
+const SetupMessage = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: ${padding300};
+  align-items: center;
+  justify-content: center;
 `;
 
 export default JiraWidget;

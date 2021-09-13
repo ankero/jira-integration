@@ -1,12 +1,10 @@
 export const SETTINGS_KEYS = {
   resourceId: "resourceId",
   jql: "jql",
-  selectedColumns: "selectedColumns"
+  selectedColumns: "selectedColumns",
 };
 
-
-
-export const ORDER_BY_REGEX = /order by (\w+) (\w+)/mi;
+export const ORDER_BY_REGEX = /order by (\w+) (\w+)/im;
 
 export const ISSUE_FIELDS = {
   issuetype: "issuetype",
@@ -18,100 +16,111 @@ export const ISSUE_FIELDS = {
   updated: "updated",
   assignee: "assignee",
   reporter: "reporter",
-  status: "status"
+  status: "status",
 };
 
-export const DEFAULT_COLUMNS = ["issuetype", "key", "summary", "priority", "created", "assignee"];
+export const DEFAULT_COLUMNS = [
+  "issuetype",
+  "key",
+  "summary",
+  "priority",
+  "created",
+  "assignee",
+];
 
-export const AVAILABLE_COLUMNS = [{
-  label: "Type",
-  field: "issuetype",
-  name: "T",
-  width: "10%",
-  gridWidth: "40px",
-  sortable: true
-},
-{
-  label: "Key",
-  name: "Key",
-  field: "key",
-  width: "10%",
-  gridWidth: "100px",
-  sortable: true
-},
-{
-  label: "Summary",
-  name: "Summary",
-  field: "summary",
-  width: "30%",
-  gridWidth: "1fr",
-  sortable: true
-},
-{
-  label: "Priority",
-  name: "P",
-  field: "priority",
-  width: "10%",
-  gridWidth: "40px",
-  sortable: true
-},
-{
-  label: "Created",
-  name: "Created",
-  field: "created",
-  width: "20%",
-  gridWidth: "120px",
-  sortable: true
-},
-{
-  label: "Due Date",
-  name: "Due Date",
-  field: "duedate",
-  width: "20%",
-  gridWidth: "120px",
-  sortable: true
-},
-{
-  label: "Updated",
-  name: "Updated",
-  field: "updated",
-  width: "20%",
-  gridWidth: "120px",
-  sortable: true
-},
-{
-  label: "Assignee",
-  name: "Assignee",
-  field: "assignee",
-  width: "20%",
-  gridWidth: "180px",
-  sortable: true
-},
-{
-  label: "Reporter",
-  name: "Reporter",
-  field: "reporter",
-  width: "20%",
-  gridWidth: "180px",
-  sortable: true
-},
-{
-  label: "Status",
-  name: "Status",
-  field: "status",
-  width: "20%",
-  gridWidth: "40px",
-  sortable: true
-}]
+export const AVAILABLE_COLUMNS = [
+  {
+    label: "Type",
+    field: "issuetype",
+    name: "T",
+    width: "10%",
+    gridWidth: "40px",
+    sortable: true,
+  },
+  {
+    label: "Key",
+    name: "Key",
+    field: "key",
+    width: "10%",
+    gridWidth: "100px",
+    sortable: true,
+  },
+  {
+    label: "Summary",
+    name: "Summary",
+    field: "summary",
+    width: "30%",
+    gridWidth: "1fr",
+    sortable: true,
+  },
+  {
+    label: "Priority",
+    name: "P",
+    field: "priority",
+    width: "10%",
+    gridWidth: "40px",
+    sortable: true,
+  },
+  {
+    label: "Created",
+    name: "Created",
+    field: "created",
+    width: "20%",
+    gridWidth: "120px",
+    sortable: true,
+  },
+  {
+    label: "Due Date",
+    name: "Due Date",
+    field: "duedate",
+    width: "20%",
+    gridWidth: "120px",
+    sortable: true,
+  },
+  {
+    label: "Updated",
+    name: "Updated",
+    field: "updated",
+    width: "20%",
+    gridWidth: "120px",
+    sortable: true,
+  },
+  {
+    label: "Assignee",
+    name: "Assignee",
+    field: "assignee",
+    width: "20%",
+    gridWidth: "180px",
+    sortable: true,
+  },
+  {
+    label: "Reporter",
+    name: "Reporter",
+    field: "reporter",
+    width: "20%",
+    gridWidth: "180px",
+    sortable: true,
+  },
+  {
+    label: "Status",
+    name: "Status",
+    field: "status",
+    width: "20%",
+    gridWidth: "40px",
+    sortable: true,
+  },
+];
 export const WIDGET_SETTINGS = [
   {
     placeholder: "Select Jira site",
     key: SETTINGS_KEYS.resourceId,
     value: "",
-    options: [{
-      label: "Select value",
-      value: null
-    }],
+    options: [
+      {
+        label: "Select value",
+        value: null,
+      },
+    ],
     type: "dropdown",
   },
   {
@@ -131,7 +140,8 @@ export const WIDGET_SETTINGS = [
   {
     placeholder: "What is JQL?",
     key: "jqlHelp",
-    value: "https://support.atlassian.com/jira-service-management-cloud/docs/use-advanced-search-with-jira-query-language-jql/",
+    value:
+      "https://support.atlassian.com/jira-service-management-cloud/docs/use-advanced-search-with-jira-query-language-jql/",
     type: "help-link",
   },
   {
@@ -139,8 +149,8 @@ export const WIDGET_SETTINGS = [
     key: SETTINGS_KEYS.selectedColumns,
     value: JSON.stringify(DEFAULT_COLUMNS),
     type: "text",
-    hide: true
+    hide: true,
   },
 ];
 
-export const HELP_URL = "https://www.google.com"
+export const HELP_URL = "https://www.google.com";

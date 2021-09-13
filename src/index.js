@@ -5,10 +5,10 @@ class happeoCustomReactWidget extends HTMLElement {
   connectedCallback() {
     const uniqueId = this.getAttribute("uniqueId") || "";
     const mode = this.getAttribute("mode") || "";
-    
+
     ReactDOM.render(
       <JiraWidget id={uniqueId} editMode={mode === "edit"} />,
-      this
+      this,
     );
   }
 }
