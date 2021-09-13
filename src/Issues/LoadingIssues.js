@@ -1,10 +1,11 @@
 import React from "react";
+import styled from "styled-components";
 import Skeleton from "react-loading-skeleton";
 import { ListStripedContainer } from "@happeouikit/list";
 
 const LoadingTickets = () => {
   return (
-    <ListStripedContainer style={{ flex: 1 }}>
+    <StyledListStripedContainer style={{ flex: 1 }}>
       <div style={{ display: "flex" }}>
         <div
           style={{
@@ -43,8 +44,12 @@ const LoadingTickets = () => {
           <Skeleton width="60%" height="20px" />
         </div>
       </div>
-    </ListStripedContainer>
+    </StyledListStripedContainer>
   );
 };
+
+const StyledListStripedContainer = styled(ListStripedContainer)`
+  box-shadow: none;
+`;
 
 export default LoadingTickets;

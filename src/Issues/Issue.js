@@ -111,7 +111,6 @@ const LongText = styled(BodyUI)`
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  max-width: 200px;
 `;
 
 const StyledLink = styled.div`

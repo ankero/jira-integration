@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 
 import { ListStripedContainer, ListHeader } from "@happeouikit/list";
+import { Loader } from "@happeouikit/loaders";
+import { TextEpsilon } from "@happeouikit/typography";
+import { ButtonSecondary } from "@happeouikit/buttons";
+import { radius500 } from "@happeouikit/theme";
+import { IconExternalLink } from "@happeouikit/icons";
 
 import { searchIssues } from "../actions";
 import LoadingIssues from "./LoadingIssues";
@@ -13,11 +18,17 @@ import {
 } from "../constants";
 import ColumnsFilter from "./ColumnsFilter";
 import { ErrorMessage } from "../StateMessages";
+import { margin300, padding300 } from "@happeouikit/layout";
+import { white } from "@happeouikit/colors";
 
-const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
+const IssueList = ({ widgetApi, settings, rootUrl }) => {
   const [loading, setLoading] = useState(true);
+  const [onLoadingSort, setOnLoadingSort] = useState(false);
   const [error, setError] = useState();
   const [issues, setIssues] = useState([]);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [sortDir, setSortDir] = useState("asc");
   const [sortField, setSortField] = useState("");
   const [selectedColumns, setSelectedColumns] = useState(
@@ -38,14 +49,26 @@ const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
           setSortDir(match[2]);
         }
 
+        const maxResults = settings.maxResults || 10;
+        const startAt = pageNumber * maxResults;
+
         const token = await widgetApi.getJWT();
         const result = await searchIssues(token, {
           jql: settings.jql || "",
           resourceId: settings.resourceId,
-          maxResults: settings.maxResults || 10,
+          maxResults,
+          startAt,
         });
         if (mounted) {
-          setIssues(result);
+          setIssues((prevValue) => [
+            ...new Map(
+              [...(pageNumber > 0 ? prevValue : []), ...result.issues].map(
+                (item) => [item.id, item],
+              ),
+            ).values(),
+          ]);
+          setTotal(result.total);
+          setHasMore(result.issues.length >= maxResults);
         }
       } catch (error) {
         if (mounted) {
@@ -59,7 +82,7 @@ const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
     return () => {
       mounted = false;
     };
-  }, [widgetApi, settings]);
+  }, [widgetApi, settings, pageNumber]);
 
   useEffect(() => {
     if (issues.length <= 1) {
@@ -69,6 +92,7 @@ const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
     let mounted = true;
 
     const applySort = async () => {
+      setOnLoadingSort(true);
       let jql = settings.jql || "";
 
       const match = ORDER_BY_REGEX.exec(jql.toLowerCase());
@@ -76,16 +100,24 @@ const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
         jql = jql.replace(ORDER_BY_REGEX, "");
       }
       jql = `${jql} order by ${sortField}${" " + sortDir.toUpperCase()}`;
-
+      const maxResults = (settings.maxResults || 10) * (pageNumber + 1);
       const token = await widgetApi.getJWT();
       const result = await searchIssues(token, {
         jql: jql.trim(),
         resourceId: settings.resourceId,
+        maxResults,
+        startAt: 0,
       });
       if (result.errorMessage) {
+        setOnLoadingSort(false);
         return;
       }
-      if (mounted) setIssues(result);
+      if (mounted) {
+        setIssues(result.issues);
+        setTotal(result.total);
+        setHasMore(result.issues.length >= maxResults);
+        setOnLoadingSort(false);
+      }
     };
 
     applySort();
@@ -94,6 +126,10 @@ const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
       mounted = false;
     };
   }, [sortDir, sortField]);
+
+  const loadMore = () => setPageNumber((prevValue) => prevValue + 1);
+
+  const openJira = () => window.open(rootUrl, "_blank").focus();
 
   const setSort = (fieldKey) => {
     setSortDir((prevValue) => (prevValue === "asc" ? "desc" : "asc"));
@@ -113,49 +149,91 @@ const IssueList = ({ widgetApi, settings, rootUrl, editMode }) => {
     return <ErrorMessage error={error.message} />;
   }
 
-  if (loading) {
+  if (loading && issues.length === 0) {
     return <LoadingIssues />;
   }
 
   return (
-    <StyledListStripedContainer
-      style={{ flex: 1 }}
-      selectedColumns={selectedColumns}
-    >
-      {editMode && (
-        <Header>
+    <Container>
+      <Header>
+        <TextEpsilon>
+          {"Issues"}
+          {total > 0 ? ` (${total})` : ""}
+        </TextEpsilon>
+        <div style={{ display: "flex" }}>
+          <ButtonSecondary
+            style={{ marginRight: margin300 }}
+            icon={IconExternalLink}
+            text="Open Jira"
+            onClick={openJira}
+          />
           <ColumnsFilter
             onChangeFilter={onChangeFilter}
             selectedColumns={selectedColumns}
           />
-        </Header>
-      )}
-      <ListHeader
-        headers={AVAILABLE_COLUMNS.filter(({ field }) =>
-          selectedColumns.includes(field),
-        )}
-        sortDir={sortDir}
-        sortField={sortField}
-        sortFn={setSort}
-      />
-      {issues.map((issue) => (
-        <Issue
-          key={issue.id}
-          issue={issue}
-          rootUrl={rootUrl}
+        </div>
+      </Header>
+      <div style={{ overflow: "auto", display: "flex" }}>
+        <StyledListStripedContainer
+          style={{ flex: 1 }}
           selectedColumns={selectedColumns}
-        />
-      ))}
-    </StyledListStripedContainer>
+        >
+          <ListHeader
+            headers={AVAILABLE_COLUMNS.filter(({ field }) =>
+              selectedColumns.includes(field),
+            )}
+            sortDir={sortDir}
+            sortField={sortField}
+            sortFn={setSort}
+          />
+          {issues.map((issue) => (
+            <Issue
+              key={issue.id}
+              issue={issue}
+              rootUrl={rootUrl}
+              selectedColumns={selectedColumns}
+            />
+          ))}
+        </StyledListStripedContainer>
+      </div>
+      <Footer>
+        <LoadMoreContainer>
+          {hasMore && !loading && (
+            <ButtonSecondary text="Load more" onClick={loadMore} />
+          )}
+          {issues.length > 0 && loading && !onLoadingSort && (
+            <Loader containerHeight="40px" />
+          )}
+        </LoadMoreContainer>
+      </Footer>
+    </Container>
   );
 };
-
+const Container = styled.div`
+  width: 100%;
+  padding: ${padding300};
+  background-color: ${white};
+  border-radius: ${radius500};
+`;
 const Header = styled.div`
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+`;
+const Footer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+const LoadMoreContainer = styled.div`
+  margin-top: ${margin300};
+  min-width: 100px;
 `;
 
 const StyledListStripedContainer = styled(ListStripedContainer)`
+  box-shadow: none;
+  padding: 0;
+  background-color: transparent;
   > li {
     display: grid;
     grid-template-columns: ${({ selectedColumns }) =>
