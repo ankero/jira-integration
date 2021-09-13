@@ -1,20 +1,26 @@
-import React from "react"
+import React from "react";
 import styled from "styled-components";
 import { active } from "@happeouikit/colors";
 import { BodyUI } from "@happeouikit/typography";
-import { Tooltip } from "@happeouikit/tooltip"
-import {
-  LiStriped,
-  LiCol,
-} from "@happeouikit/list";
+import { Tooltip } from "@happeouikit/tooltip";
+import { LiStriped, LiCol } from "@happeouikit/list";
 
-import IssueBadge from "./IssueBadge"
+import IssueBadge from "./IssueBadge";
 import { AVAILABLE_COLUMNS, ISSUE_FIELDS } from "../constants";
-
 
 const Issue = ({ issue, rootUrl, selectedColumns }) => {
   const { id, key, fields } = issue;
-  const { issuetype, priority, summary, created, assignee, reporter, duedate, updated, status } = fields;
+  const {
+    issuetype,
+    priority,
+    summary,
+    created,
+    assignee,
+    reporter,
+    duedate,
+    updated,
+    status,
+  } = fields;
 
   const assigneeName = assignee?.displayName || "Unassigned";
   const reporterName = reporter?.displayName || "na";
@@ -42,24 +48,22 @@ const Issue = ({ issue, rootUrl, selectedColumns }) => {
       case ISSUE_FIELDS.issuetype:
         return <IssueBadge item={issuetype} />;
       case ISSUE_FIELDS.key:
-        return <StyledLink
-          aria-label={summary}
-          role="button"
-          onClick={openIssue}
-        >
-          <BodyUI>{key}</BodyUI></StyledLink>;
+        return (
+          <StyledLink aria-label={summary} role="button" onClick={openIssue}>
+            <BodyUI>{key}</BodyUI>
+          </StyledLink>
+        );
       case ISSUE_FIELDS.summary:
-        return <><StyledLink
-          aria-label={summary}
-          role="button"
-          onClick={openIssue}
-        >
-          <LongText data-for={id} data-tip={summary}>
-            {summary}
-          </LongText>
-
-        </StyledLink>
-          <Tooltip id={id} /></>
+        return (
+          <>
+            <StyledLink aria-label={summary} role="button" onClick={openIssue}>
+              <LongText data-for={id} data-tip={summary}>
+                {summary}
+              </LongText>
+            </StyledLink>
+            <Tooltip id={id} />
+          </>
+        );
       case ISSUE_FIELDS.priority:
         return <IssueBadge item={priority} />;
       case ISSUE_FIELDS.status:
@@ -67,28 +71,40 @@ const Issue = ({ issue, rootUrl, selectedColumns }) => {
       case ISSUE_FIELDS.created:
         return <BodyUI>{createdTimestamp}</BodyUI>;
       case ISSUE_FIELDS.duedate:
-        return <BodyUI>{duedateTimestamp}</BodyUI>
+        return <BodyUI>{duedateTimestamp}</BodyUI>;
       case ISSUE_FIELDS.updated:
-        return <BodyUI>{updatedTimestamp}</BodyUI>
+        return <BodyUI>{updatedTimestamp}</BodyUI>;
       case ISSUE_FIELDS.assignee:
-        return <BodyUI style={{ fontStyle: assignee ? "" : "italic" }}>{assigneeName}</BodyUI>;
+        return (
+          <BodyUI style={{ fontStyle: assignee ? "" : "italic" }}>
+            {assigneeName}
+          </BodyUI>
+        );
       case ISSUE_FIELDS.reporter:
-        return <BodyUI style={{ fontStyle: reporter ? "" : "italic" }}>{reporterName}</BodyUI>;
+        return (
+          <BodyUI style={{ fontStyle: reporter ? "" : "italic" }}>
+            {reporterName}
+          </BodyUI>
+        );
       default:
         break;
     }
-  }
+  };
 
-  const columns = AVAILABLE_COLUMNS.filter(({ field }) => selectedColumns.includes(field));
+  const columns = AVAILABLE_COLUMNS.filter(({ field }) =>
+    selectedColumns.includes(field),
+  );
 
   return (
     <LiStriped key={id}>
-      {columns.map(({ field }) => <LiCol key={field} width={"auto"}>
-        {getColumnContent(field)}
-      </LiCol>)}
+      {columns.map(({ field }) => (
+        <LiCol key={field} width={"auto"}>
+          {getColumnContent(field)}
+        </LiCol>
+      ))}
     </LiStriped>
   );
-}
+};
 
 const LongText = styled(BodyUI)`
   min-width: 0;

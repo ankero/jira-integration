@@ -1,9 +1,6 @@
 import React from "react";
 import Skeleton from "react-loading-skeleton";
-import {
-  ListStripedContainer
-} from "@happeouikit/list";
-
+import { ListStripedContainer } from "@happeouikit/list";
 
 const LoadingTickets = () => {
   return (
