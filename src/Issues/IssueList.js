@@ -21,7 +21,7 @@ import { ErrorMessage } from "../StateMessages";
 import { margin300, padding300 } from "@happeouikit/layout";
 import { white } from "@happeouikit/colors";
 
-const IssueList = ({ widgetApi, settings, rootUrl }) => {
+const IssueList = ({ widgetApi, settings, query, rootUrl }) => {
   const [loading, setLoading] = useState(true);
   const [onLoadingSort, setOnLoadingSort] = useState(false);
   const [error, setError] = useState();
@@ -49,16 +49,18 @@ const IssueList = ({ widgetApi, settings, rootUrl }) => {
           setSortDir(match[2]);
         }
 
+        const jql = query ? `text ~ "${query}"` : settings.jql || "";
         const maxResults = settings.maxResults || 10;
         const startAt = pageNumber * maxResults;
 
         const token = await widgetApi.getJWT();
         const result = await searchIssues(token, {
-          jql: settings.jql || "",
+          jql,
           resourceId: settings.resourceId,
           maxResults,
           startAt,
         });
+
         if (mounted) {
           setIssues((prevValue) => [
             ...new Map(

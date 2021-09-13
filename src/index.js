@@ -5,9 +5,16 @@ class happeoCustomReactWidget extends HTMLElement {
   connectedCallback() {
     const uniqueId = this.getAttribute("uniqueId") || "";
     const mode = this.getAttribute("mode") || "";
+    const location = this.getAttribute("location") || "";
+    const query = this.getAttribute("query") || "";
 
     ReactDOM.render(
-      <JiraWidget id={uniqueId} editMode={mode === "edit"} />,
+      <JiraWidget
+        id={uniqueId}
+        editMode={mode === "edit"}
+        location={location}
+        query={query}
+      />,
       this,
     );
   }

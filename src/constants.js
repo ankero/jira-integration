@@ -158,3 +158,8 @@ export const HELP_URL = "https://www.google.com";
 export const POPUP_PARAMS =
   "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=600,left=100,top=100";
 export const BASE_URL = "https://jira-integration-huuhwkj6na-ew.a.run.app";
+
+export const WIDGET_LOCATION = {
+  pages: "pages",
+  search: "search",
+};

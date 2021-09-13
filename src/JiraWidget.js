@@ -6,6 +6,7 @@ import {
   BASE_URL,
   POPUP_PARAMS,
   SETTINGS_KEYS,
+  WIDGET_LOCATION,
   WIDGET_SETTINGS,
 } from "./constants";
 import { IssueList, LoadingIssues } from "./Issues";
@@ -16,7 +17,7 @@ import {
   SetupMessage,
 } from "./StateMessages";
 
-const JiraWidget = ({ id, editMode }) => {
+const JiraWidget = ({ id, editMode, query, location }) => {
   const [initialized, setInitialized] = useState(false);
   const [widgetApi, setWidgetApi] = useState();
   const [unauthorized, setUnauthorized] = useState(false);
@@ -138,6 +139,7 @@ const JiraWidget = ({ id, editMode }) => {
       <IssueList
         widgetApi={widgetApi}
         settings={settings}
+        query={query}
         rootUrl={
           accessibleResources.find(({ id }) => id === settings.resourceId)?.url
         }

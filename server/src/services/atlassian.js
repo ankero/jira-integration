@@ -103,15 +103,51 @@ const getAccessibleResources = async (locals) => {
   return result;
 };
 
-const searchWithJql = async (locals, params) => {
+const searchSuggestions = async (locals, params) => {
   const { auth } = locals;
 
-  if (!params.resourceId) {
-    throw new BadRequest("missing_parameter: 'resourceId'");
+  if (!params.resourceId && !locals.baseUrl) {
+    throw new BadRequest("missing_parameter: 'resourceId' or baseUrl not set");
   }
 
   const url = new URL(
-    `${BASE_URL}/ex/jira/${params.resourceId}/rest/api/2/search`,
+    `${
+      locals.baseUrl || `${BASE_URL}/ex/jira/${params.resourceId}`
+    }/rest/api/3/issue/picker`,
+  );
+
+  url.searchParams.append("query", params.query || "");
+
+  const options = {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${auth.access_token}`,
+      Accept: "application/json",
+    },
+  };
+
+  const response = await fetch(url, options);
+  const result = await response.json();
+
+  if (result.code === 401 && locals.auth.refresh_token) {
+    const newLocals = await useRefreshToken(locals);
+    return await searchWithJql(newLocals, params);
+  }
+
+  return result;
+};
+
+const searchWithJql = async (locals, params) => {
+  const { auth } = locals;
+
+  if (!params.resourceId && !locals.baseUrl) {
+    throw new BadRequest("missing_parameter: 'resourceId' or baseUrl not set");
+  }
+
+  const url = new URL(
+    `${
+      locals.baseUrl || `${BASE_URL}/ex/jira/${params.resourceId}`
+    }/rest/api/3/issue/picker`,
   );
 
   url.searchParams.append("jql", params.jql || "");
@@ -152,4 +188,5 @@ module.exports = {
   exchangeCodeToToken,
   getAccessibleResources,
   searchWithJql,
+  searchSuggestions,
 };
