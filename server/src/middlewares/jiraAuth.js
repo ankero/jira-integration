@@ -5,13 +5,13 @@ const verifyJiraAuth = async (req, res, next) => {
   try {
     const { origin } = req.headers;
     const { user } = res.locals;
-    
+
     if (!origin) {
       throw new Unauthorized("invalid_xrfs");
     }
-    
+
     const { origin: savedOrigin, token } = await getToken(user, origin);
-    
+
     if (!origin || !token) {
       throw new Unauthorized("authorization_missing");
     }
@@ -28,13 +28,13 @@ const verifyJiraAuth = async (req, res, next) => {
 
     res.locals.auth = {
       access_token,
-      refresh_token
+      refresh_token,
     };
     res.locals.origin = origin;
 
     next();
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 

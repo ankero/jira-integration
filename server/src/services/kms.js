@@ -1,25 +1,31 @@
-const { KeyManagementServiceClient } = require('@google-cloud/kms');
-const { PROJECT_NAME, KMS_LOCATION, KEYRING_NAME } = require('../constants');
-const { NODE_ENV } = process.env
+const { KeyManagementServiceClient } = require("@google-cloud/kms");
+const { PROJECT_NAME, KMS_LOCATION, KEYRING_NAME } = require("../constants");
+const { NODE_ENV } = process.env;
 const DAY_IN_SECONDS = 3600 * 24;
-const ROTATION_DAYS = 30 * 3;// 3 months
-const ROTATION_PERIOD = DAY_IN_SECONDS * ROTATION_DAYS
+const ROTATION_DAYS = 30 * 3; // 3 months
+const ROTATION_PERIOD = DAY_IN_SECONDS * ROTATION_DAYS;
 
 const client = new KeyManagementServiceClient({
-  ...(NODE_ENV === "local" ? {
-    credentials: require("../../.secrets/service-account.json")
-  } : {})
+  ...(NODE_ENV === "local"
+    ? {
+        credentials: require("../../.secrets/service-account.json"),
+      }
+    : {}),
 });
 const locationName = client.locationPath(PROJECT_NAME, KMS_LOCATION);
-const keyRingLocation = keyRingName = client.keyRingPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME);
-const crc32c = require('fast-crc32c');
+const keyRingLocation = (keyRingName = client.keyRingPath(
+  PROJECT_NAME,
+  KMS_LOCATION,
+  KEYRING_NAME,
+));
+const crc32c = require("fast-crc32c");
 
-const { BadRequest } = require('http-errors');
+const { BadRequest } = require("http-errors");
 
 async function getKeyRing() {
   try {
     const [keyRing] = await client.getKeyRing({
-      name: keyRingLocation
+      name: keyRingLocation,
     });
 
     return keyRing;
@@ -42,7 +48,7 @@ async function createKeyRing() {
     console.log(`[Encryption] Created new key ring: ${keyRing.name}`);
     return keyRing;
   } catch (error) {
-    console.error(error)
+    console.error(error);
     throw error;
   }
 }
@@ -60,9 +66,14 @@ async function initKeyRing() {
 
 async function getCryptoKey(cryptoKeyId) {
   try {
-    const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, cryptoKeyId)
+    const name = client.cryptoKeyPath(
+      PROJECT_NAME,
+      KMS_LOCATION,
+      KEYRING_NAME,
+      cryptoKeyId,
+    );
     const [key] = await client.getCryptoKey({
-      name
+      name,
     });
     return key;
   } catch (error) {
@@ -70,10 +81,9 @@ async function getCryptoKey(cryptoKeyId) {
       // Not found > create new key ring
       return null;
     }
-    console.error(error)
+    console.error(error);
     throw error;
   }
-
 }
 
 async function createKeySymmetricEncryptDecrypt(cryptoKeyId) {
@@ -82,14 +92,14 @@ async function createKeySymmetricEncryptDecrypt(cryptoKeyId) {
     cryptoKeyId,
     cryptoKey: {
       rotationPeriod: {
-        seconds: ROTATION_PERIOD
+        seconds: ROTATION_PERIOD,
       },
       nextRotationTime: {
         seconds: Date.now() / 1000 + ROTATION_PERIOD,
       },
-      purpose: 'ENCRYPT_DECRYPT',
+      purpose: "ENCRYPT_DECRYPT",
       versionTemplate: {
-        algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
+        algorithm: "GOOGLE_SYMMETRIC_ENCRYPTION",
       },
     },
   });
@@ -100,11 +110,16 @@ async function createKeySymmetricEncryptDecrypt(cryptoKeyId) {
 
 async function encryptSymmetric(keyName, dataToEncrypt) {
   if (typeof dataToEncrypt !== "string") {
-    throw new BadRequest("only_string_allowed")
+    throw new BadRequest("only_string_allowed");
   }
 
-  const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, keyName)
-  const plaintextBuffer = Buffer.from(dataToEncrypt)
+  const name = client.cryptoKeyPath(
+    PROJECT_NAME,
+    KMS_LOCATION,
+    KEYRING_NAME,
+    keyName,
+  );
+  const plaintextBuffer = Buffer.from(dataToEncrypt);
   const plaintextCrc32c = crc32c.calculate(plaintextBuffer);
   const [encryptResponse] = await client.encrypt({
     name,
@@ -120,20 +135,25 @@ async function encryptSymmetric(keyName, dataToEncrypt) {
   // For more details on ensuring E2E in-transit integrity to and from Cloud KMS visit:
   // https://cloud.google.com/kms/docs/data-integrity-guidelines
   if (!encryptResponse.verifiedPlaintextCrc32c) {
-    throw new Error('Encrypt: request corrupted in-transit');
+    throw new Error("Encrypt: request corrupted in-transit");
   }
   if (
     crc32c.calculate(ciphertext) !==
     Number(encryptResponse.ciphertextCrc32c.value)
   ) {
-    throw new Error('Encrypt: response corrupted in-transit');
+    throw new Error("Encrypt: response corrupted in-transit");
   }
   return ciphertext;
 }
 
 async function decryptSymmetric(keyName, ciphertext) {
   try {
-    const name = client.cryptoKeyPath(PROJECT_NAME, KMS_LOCATION, KEYRING_NAME, keyName)
+    const name = client.cryptoKeyPath(
+      PROJECT_NAME,
+      KMS_LOCATION,
+      KEYRING_NAME,
+      keyName,
+    );
     const ciphertextCrc32c = crc32c.calculate(ciphertext);
 
     const [decryptResponse] = await client.decrypt({
@@ -151,7 +171,7 @@ async function decryptSymmetric(keyName, ciphertext) {
       crc32c.calculate(decryptResponse.plaintext) !==
       Number(decryptResponse.plaintextCrc32c.value)
     ) {
-      throw new Error('Decrypt: response corrupted in-transit');
+      throw new Error("Decrypt: response corrupted in-transit");
     }
 
     const plaintext = decryptResponse.plaintext.toString();
@@ -167,5 +187,5 @@ module.exports = {
   getCryptoKey,
   createKeySymmetricEncryptDecrypt,
   encryptSymmetric,
-  decryptSymmetric
-}
+  decryptSymmetric,
+};

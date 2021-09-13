@@ -6,7 +6,11 @@ const {
   AUTH_BASE_URL,
 } = require("../constants");
 const { createStateToken } = require("../services/firestore");
-const { verifySharedToken, createToken, createInternalToken } = require("../services/jwt");
+const {
+  verifySharedToken,
+  createToken,
+  createInternalToken,
+} = require("../services/jwt");
 
 /**
  * Callback of Zendesk OAuth process. Drawbridge does not authenticate the user because of custom domains.
@@ -19,11 +23,11 @@ module.exports = async function oauthBegin(req, res) {
   const { token, origin } = req.query;
 
   if (!token) {
-    throw new BadRequest("token_missing")
+    throw new BadRequest("token_missing");
   }
 
   if (!origin) {
-    throw new BadRequest("origin_missing")
+    throw new BadRequest("origin_missing");
   }
 
   // Verify token gotten from Happeo
@@ -42,6 +46,6 @@ module.exports = async function oauthBegin(req, res) {
   authorize.searchParams.append("state", stateToken);
   authorize.searchParams.append("response_type", "code");
   authorize.searchParams.append("prompt", "consent");
-  
+
   res.redirect(authorize);
 };

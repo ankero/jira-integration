@@ -10,7 +10,7 @@ function createInternalToken(data) {
 }
 
 function verifySharedToken(token) {
-  try {    
+  try {
     const data = jwt.verify(token, sharedSecret);
     if (data.id) {
       return data;
@@ -18,9 +18,8 @@ function verifySharedToken(token) {
 
     return {
       id: data.user.id,
-      organisationId: data.organisation.id
-    }
-
+      organisationId: data.organisation.id,
+    };
   } catch (error) {
     throw error;
   }
@@ -30,9 +29,8 @@ function generateStateToken(token, origin) {
   try {
     return createStateToken({
       token,
-      origin
-    })
-
+      origin,
+    });
   } catch (error) {
     throw error;
   }
@@ -40,16 +38,16 @@ function generateStateToken(token, origin) {
 
 const initJWT = async () => {
   try {
-    sharedSecret = await getSecret(SHARED_SECRET_KEY)
+    sharedSecret = await getSecret(SHARED_SECRET_KEY);
     console.log("[JWT] Shared secret ready");
   } catch (error) {
     throw error;
   }
-}
+};
 
 module.exports = {
   createInternalToken,
   verifySharedToken,
   generateStateToken,
-  initJWT
+  initJWT,
 };

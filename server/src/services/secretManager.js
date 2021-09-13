@@ -1,12 +1,14 @@
 // Import the Secret Manager client and instantiate it:
-const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
-const { SECRETS_PROJECT } = require('../constants');
-const { NODE_ENV } = process.env
+const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
+const { SECRETS_PROJECT } = require("../constants");
+const { NODE_ENV } = process.env;
 
 const client = new SecretManagerServiceClient({
-  ...(NODE_ENV === "local" ? {
-    credentials: require("../../.secrets/service-account.json")
-  } : {})
+  ...(NODE_ENV === "local"
+    ? {
+        credentials: require("../../.secrets/service-account.json"),
+      }
+    : {}),
 });
 
 const getSecret = async (secretId) => {
@@ -19,15 +21,14 @@ const getSecret = async (secretId) => {
       return null;
     }
 
-    const responsePayload = accessResponse.payload.data.toString('utf8');
+    const responsePayload = accessResponse.payload.data.toString("utf8");
 
-    return responsePayload
+    return responsePayload;
   } catch (error) {
     return null;
   }
-
-}
+};
 
 module.exports = {
-  getSecret
-}
+  getSecret,
+};

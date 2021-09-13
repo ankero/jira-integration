@@ -12,7 +12,7 @@ const { initKeyRing } = require("./services/kms");
 const { initAtlassian } = require("./services/atlassian");
 const { initJWT } = require("./services/jwt");
 
-Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {  
+Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {
   const app = express();
   app.use(cors());
   app.use(cookieParser());
@@ -27,9 +27,19 @@ Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {
 
   app.get("/oauth/callback", asyncwrapper(oauthCallback));
 
-  app.get("/accessible-resources", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(accessibleResources));
+  app.get(
+    "/api/accessible-resources",
+    verifyHappeoAuth,
+    verifyJiraAuth,
+    asyncwrapper(accessibleResources),
+  );
 
-  app.get("/search", verifyHappeoAuth, verifyJiraAuth, asyncwrapper(search));
+  app.get(
+    "/api/search",
+    verifyHappeoAuth,
+    verifyJiraAuth,
+    asyncwrapper(search),
+  );
 
   app.use(function (_req, res, next) {
     res.set("Cache-control", "no-cache");
@@ -50,11 +60,11 @@ Promise.all([initKeyRing(), initAtlassian(), initJWT()]).then(() => {
   });
 
   app.use((err, _req, res, _next) => {
-    res.status(err.status || 500).send(err.message)
+    res.status(err.status || 500).send(err.message);
   });
 
   const port = process.env.PORT || 8081;
   app.listen(port, () => {
     console.log(`Custom widget example: listening on port ${port}`);
   });
-})
+});

@@ -27,13 +27,9 @@ module.exports = async function oauthCallback(req, res) {
     // Encryption key is generated per user
     await storeToken(user, origin, token);
 
-    res.redirect(
-      `${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=true`,
-    );
+    res.redirect(`${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=true`);
   } catch (err) {
     console.log(err);
-    res.redirect(
-      `${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=false`,
-    );
+    res.redirect(`${OAUTH_CALLBACK_AFTER_REDIRECT_URL}?success=false`);
   }
 };

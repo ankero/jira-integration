@@ -5,13 +5,15 @@ const verifyHappeoAuth = (req, res, next) => {
     const token = req.headers.authorization.split("Bearer ")[1];
     const user = verifySharedToken(token);
 
-    console.log(`Request for userId:${user.id} organisationId:${user.organisationId}`);
+    console.log(
+      `Request for userId:${user.id} organisationId:${user.organisationId}`,
+    );
 
     res.locals.user = user;
 
     next();
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 

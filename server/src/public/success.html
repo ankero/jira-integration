@@ -17,20 +17,19 @@
   </head>
   <body>
     <div class="container">
-      <h1>
-        Jira authorization successfull.
-      </h1>
-      <p>This window will close automatically.</p>
+      <h1>Jira authorization successfull.</h1>
+      <p>You can now close this window.</p>
     </div>
   </body>
   <script>
     // The auth flow should be opened in a popup window
-    // The popup will be gicen the function _h, which sends the state to the 
-    setTimeout(()=>{
-        const parent = window.opener;
-        if (parent._h) {
-          parent._h("#{state}");
-        }
-      }, 10);
+    // The popup will be given the function _h, which sends the state to the
+    setTimeout(() => {
+      const parent = window.opener;
+      console.log(parent);
+      if (parent._h) {
+        parent._h("#{state}");
+      }
+    }, 10);
   </script>
 </html>

@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-
+import { BodyUI, TextEpsilon } from "@happeouikit/typography";
 import widgetSDK from "@happeo/widget-sdk";
-import { SETTINGS_KEYS, WIDGET_SETTINGS } from "./constants";
 import { margin300, padding300 } from "@happeouikit/layout";
 
+import {
+  BASE_URL,
+  POPUP_PARAMS,
+  SETTINGS_KEYS,
+  WIDGET_SETTINGS,
+} from "./constants";
 import { IssueList } from "./TicketList";
 import { getAccessibleResources } from "./actions";
 import LoadingTickets from "./TicketList/LoadingIssues";
 import UnauthorizedMessage from "./UnauthorizedMessage";
-import { BodyUI, TextEpsilon } from "@happeouikit/typography";
 
 const JiraWidget = ({ id, editMode }) => {
   const [initialized, setInitialized] = useState(false);
@@ -60,24 +64,37 @@ const JiraWidget = ({ id, editMode }) => {
       } catch (error) {
         if (error.message === "unauthorized") {
           setUnauthorized(true);
+          setInitialized(false);
         }
       }
     };
     getResources();
   }, [initialized]);
 
+  const retryAuthorization = () => {
+    setUnauthorized(false);
+    setInitialized(true);
+  };
+
+  useEffect(() => {
+    if (!unauthorized) {
+      return () => {
+        window.removeEventListener("focus", retryAuthorization);
+      };
+    }
+  }, [unauthorized]);
+
   const startAuthorization = async () => {
     const token = await widgetApi.getJWT();
-    const url = `https://jira-integration-huuhwkj6na-ew.a.run.app/oauth/begin?token=${token}&origin=${window.origin}`;
-    const params =
-      "scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,width=600,height=600,left=100,top=100";
+    const url = `${BASE_URL}/oauth/begin?token=${token}&origin=${window.origin}`;
+    const params = POPUP_PARAMS;
     const popup = window.open(url, "auth", params);
-
+    window.addEventListener("focus", retryAuthorization);
     window._h = (status) => {
-      console.log(status);
       popup.close();
       if (status === "success") {
         setUnauthorized(false);
+        setInitialized(true);
       }
       window._h = null;
     };
@@ -86,19 +103,19 @@ const JiraWidget = ({ id, editMode }) => {
   const showLoader =
     !initialized ||
     (initialized && accessibleResources.length === 0 && !unauthorized);
+  console.log(initialized, unauthorized);
+  if (unauthorized) {
+    return (
+      <Container>
+        <UnauthorizedMessage authorize={startAuthorization} />
+      </Container>
+    );
+  }
 
   if (showLoader) {
     return (
       <Container>
         <LoadingTickets />
-      </Container>
-    );
-  }
-
-  if (initialized && unauthorized) {
-    return (
-      <Container>
-        <UnauthorizedMessage authorize={startAuthorization} />
       </Container>
     );
   }
