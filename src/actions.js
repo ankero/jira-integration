@@ -9,9 +9,17 @@ export const getAccessibleResources = async (token) => {
 };
 
 export const searchIssues = async (token, params) => {
-  const { issues } = await get(`${BASE_URL}/api/search`, {
-    params,
-    token,
-  });
+  const { issues, errors, errorMessages } = await get(
+    `${BASE_URL}/api/search`,
+    {
+      params,
+      token,
+    },
+  );
+
+  if (errors || errorMessages) {
+    throw new Error(errorMessages);
+  }
+
   return issues;
 };

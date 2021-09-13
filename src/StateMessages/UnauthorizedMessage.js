@@ -4,33 +4,28 @@ import { TextDelta, BodyUI } from "@happeouikit/typography";
 import { ButtonPrimary } from "@happeouikit/buttons";
 import { gray04, gray07 } from "@happeouikit/colors";
 import { IconLock } from "@happeouikit/icons";
-import { HELP_URL } from "./constants";
-
+import { margin300, margin400 } from "@happeouikit/layout";
+import { HELP_URL } from "../constants";
 
 const UnauthorizedMessage = ({ authorize }) => {
-
-  return <Container>
-    <TypeIcon>
-      <IconLock />
-    </TypeIcon>
-    <StyledTextDelta>Jira integration is not authorized</StyledTextDelta>
-    <StyledBodyUI>
-      {"In order to use Jira integration, you need to authorize the Happeo Jira integration. Click button below to start authorization."}
-      <a
-        href={HELP_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Read more
-      </a>
-    </StyledBodyUI>
-    <ButtonPrimary
-      text={"Authorize Jira"}
-      size="small"
-      onClick={authorize}
-    />
-  </Container>
-}
+  return (
+    <Container>
+      <TypeIcon>
+        <IconLock />
+      </TypeIcon>
+      <StyledTextDelta>Jira integration is not authorized</StyledTextDelta>
+      <StyledBodyUI>
+        {
+          "In order to use Jira integration, you need to authorize the Happeo Jira integration. Click button below to start authorization."
+        }
+        <a href={HELP_URL} target="_blank" rel="noopener noreferrer">
+          Read more
+        </a>
+      </StyledBodyUI>
+      <ButtonPrimary text={"Authorize Jira"} size="small" onClick={authorize} />
+    </Container>
+  );
+};
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -40,7 +35,7 @@ const Container = styled.div`
 `;
 
 const StyledTextDelta = styled(TextDelta)`
-  margin: 16px 0 8px 0;
+  margin: ${margin400} 0 ${margin300} 0;
   text-align: center;
 `;
 

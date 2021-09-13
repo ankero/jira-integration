@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { BodyUI, TextEpsilon } from "@happeouikit/typography";
 import widgetSDK from "@happeo/widget-sdk";
-import { margin300, padding300 } from "@happeouikit/layout";
 
 import {
   BASE_URL,
@@ -10,10 +8,13 @@ import {
   SETTINGS_KEYS,
   WIDGET_SETTINGS,
 } from "./constants";
-import { IssueList } from "./TicketList";
+import { IssueList, LoadingIssues } from "./Issues";
 import { getAccessibleResources } from "./actions";
-import LoadingTickets from "./TicketList/LoadingIssues";
-import UnauthorizedMessage from "./UnauthorizedMessage";
+import {
+  UnauthorizedMessage,
+  ErrorMessage,
+  SetupMessage,
+} from "./StateMessages";
 
 const JiraWidget = ({ id, editMode }) => {
   const [initialized, setInitialized] = useState(false);
@@ -21,6 +22,7 @@ const JiraWidget = ({ id, editMode }) => {
   const [unauthorized, setUnauthorized] = useState(false);
   const [accessibleResources, setAccessibleResources] = useState([]);
   const [settings, setSettings] = useState({});
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const doInit = async () => {
@@ -55,7 +57,7 @@ const JiraWidget = ({ id, editMode }) => {
     if (!initialized || !widgetApi) {
       return;
     }
-
+    setError(false);
     const getResources = async () => {
       try {
         const token = await widgetApi.getJWT();
@@ -65,6 +67,9 @@ const JiraWidget = ({ id, editMode }) => {
         if (error.message === "unauthorized") {
           setUnauthorized(true);
           setInitialized(false);
+        } else {
+          setError(error.message);
+          widgetApi.reportError(error.message || "unknown error");
         }
       }
     };
@@ -100,10 +105,6 @@ const JiraWidget = ({ id, editMode }) => {
     };
   };
 
-  const showLoader =
-    !initialized ||
-    (initialized && accessibleResources.length === 0 && !unauthorized);
-  console.log(initialized, unauthorized);
   if (unauthorized) {
     return (
       <Container>
@@ -112,30 +113,24 @@ const JiraWidget = ({ id, editMode }) => {
     );
   }
 
+  if (error) {
+    return <ErrorMessage error={error} />;
+  }
+
+  const showLoader =
+    !initialized ||
+    (initialized && accessibleResources.length === 0 && !unauthorized);
+
   if (showLoader) {
     return (
       <Container>
-        <LoadingTickets />
+        <LoadingIssues />
       </Container>
     );
   }
 
   if (initialized && !settings.resourceId) {
-    return (
-      <SetupMessage>
-        <TextEpsilon>Jira widget</TextEpsilon>
-        {editMode ? (
-          <BodyUI style={{ marginTop: margin300 }}>
-            Configure Jira widget from the right side panel.
-          </BodyUI>
-        ) : (
-          <BodyUI style={{ marginTop: margin300 }}>
-            This widget needs to be configured. Please open pages edit mode to
-            continue.
-          </BodyUI>
-        )}
-      </SetupMessage>
-    );
+    return <SetupMessage editMode={editMode} />;
   }
 
   return (
@@ -156,14 +151,6 @@ const Container = styled.div`
   display: flex;
   flex: 1;
   min-height: 100px;
-`;
-
-const SetupMessage = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: ${padding300};
-  align-items: center;
-  justify-content: center;
 `;
 
 export default JiraWidget;
