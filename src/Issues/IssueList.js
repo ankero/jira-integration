@@ -44,7 +44,9 @@ const IssueList = ({ widgetApi, settings, query, setUnauthorized }) => {
       setError(false);
       setLoading(true);
       try {
-        const match = ORDER_BY_REGEX.exec(settings.jql.toLowerCase());
+        const match = settings.jql
+          ? ORDER_BY_REGEX.exec(settings.jql.toLowerCase())
+          : "";
         if (match?.length === 3) {
           setSortField(match[1]);
           setSortDir(match[2]);
