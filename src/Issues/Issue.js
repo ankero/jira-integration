@@ -7,6 +7,8 @@ import { LiStriped, LiCol } from "@happeouikit/list";
 
 import IssueBadge from "./IssueBadge";
 import { AVAILABLE_COLUMNS, ISSUE_FIELDS } from "../constants";
+import StatusBadge from "./StatusBadge";
+import { LinkExternal } from "@happeouikit/form-elements";
 
 const Issue = ({ issue, rootUrl, selectedColumns }) => {
   const { id, key, fields } = issue;
@@ -41,33 +43,31 @@ const Issue = ({ issue, rootUrl, selectedColumns }) => {
     year: "numeric",
   });
 
-  const openIssue = () => window.open(issueUrl, "_blank").focus();
-
   const getColumnContent = (field) => {
     switch (field) {
       case ISSUE_FIELDS.issuetype:
         return <IssueBadge item={issuetype} />;
       case ISSUE_FIELDS.key:
         return (
-          <StyledLink aria-label={summary} role="button" onClick={openIssue}>
+          <LinkExternal href={issueUrl} target="_blank">
             <BodyUI>{key}</BodyUI>
-          </StyledLink>
+          </LinkExternal>
         );
       case ISSUE_FIELDS.summary:
         return (
           <>
-            <StyledLink aria-label={summary} role="button" onClick={openIssue}>
+            <LinkExternal href={issueUrl} target="_blank">
               <LongText data-for={id} data-tip={summary}>
                 {summary}
               </LongText>
-            </StyledLink>
+            </LinkExternal>
             <Tooltip id={id} />
           </>
         );
       case ISSUE_FIELDS.priority:
         return <IssueBadge item={priority} />;
       case ISSUE_FIELDS.status:
-        return <IssueBadge item={status} />;
+        return <StatusBadge item={status} />;
       case ISSUE_FIELDS.created:
         return <BodyUI>{createdTimestamp}</BodyUI>;
       case ISSUE_FIELDS.duedate:

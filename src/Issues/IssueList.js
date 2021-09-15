@@ -18,8 +18,9 @@ import {
 } from "../constants";
 import ColumnsFilter from "./ColumnsFilter";
 import { ErrorMessage } from "../StateMessages";
-import { margin300, padding300 } from "@happeouikit/layout";
+import { margin300, padding300, Spacer } from "@happeouikit/layout";
 import { white } from "@happeouikit/colors";
+import IssueSearch from "./IssueSearch";
 
 const IssueList = ({ widgetApi, settings, query, setUnauthorized }) => {
   const [loading, setLoading] = useState(true);
@@ -55,7 +56,6 @@ const IssueList = ({ widgetApi, settings, query, setUnauthorized }) => {
         const jql = query ? `text ~ "${query}"` : settings.jql || "";
         const maxResults = settings.maxResults || 10;
         const startAt = pageNumber * maxResults;
-
         const token = await widgetApi.getJWT();
         const result = await searchIssues(token, {
           jql,
@@ -139,8 +139,6 @@ const IssueList = ({ widgetApi, settings, query, setUnauthorized }) => {
 
   const loadMore = () => setPageNumber((prevValue) => prevValue + 1);
 
-  const openJira = () => window.open(rootUrl, "_blank").focus();
-
   const setSort = (fieldKey) => {
     setSortDir((prevValue) => (prevValue === "asc" ? "desc" : "asc"));
     setSortField(fieldKey);
@@ -171,14 +169,8 @@ const IssueList = ({ widgetApi, settings, query, setUnauthorized }) => {
           {total > 0 ? ` (${total})` : ""}
         </TextEpsilon>
         <div style={{ display: "flex" }}>
-          {rootUrl && (
-            <ButtonSecondary
-              style={{ marginRight: margin300 }}
-              icon={IconExternalLink}
-              text="Open Jira"
-              onClick={openJira}
-            />
-          )}
+          <IssueSearch widgetApi={widgetApi} rootUrl={rootUrl} />
+          <Spacer width={margin300} />
           <ColumnsFilter
             onChangeFilter={onChangeFilter}
             selectedColumns={selectedColumns}

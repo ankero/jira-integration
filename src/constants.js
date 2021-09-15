@@ -106,7 +106,7 @@ export const AVAILABLE_COLUMNS = [
     name: "Status",
     field: "status",
     width: "20%",
-    gridWidth: "40px",
+    gridWidth: "100px",
     sortable: true,
   },
 ];

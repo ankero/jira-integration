@@ -2,7 +2,28 @@ const {
   getAccessibleResources,
   searchWithJql,
   searchSuggestions,
+  getStatuses,
 } = require("../services/atlassian");
+
+const LOCAL_STATUS_CACHE = {};
+
+const getIssueStatuses = async (locals) => {
+  try {
+    if (LOCAL_STATUS_CACHE[locals.project.projectId]) {
+      return LOCAL_STATUS_CACHE[locals.project.projectId];
+    }
+    const statusList = await getStatuses(locals);
+    LOCAL_STATUS_CACHE[locals.project.projectId] = statusList;
+    return statusList;
+  } catch (error) {
+    console.log(
+      `Unable to list statuses for project: ${
+        locals.project.projectId
+      }. Err: ${JSON.stringify(error)}`,
+    );
+    return [];
+  }
+};
 
 const accessibleResources = async (_req, res, next) => {
   try {
@@ -17,6 +38,21 @@ const search = async (req, res, next) => {
   try {
     const { query } = req;
     const response = await searchWithJql(res.locals, query);
+    const statuses = await getIssueStatuses(res.locals);
+
+    if (response.issues) {
+      response.issues = response.issues.map((issue) => ({
+        ...issue,
+        fields: {
+          ...issue.fields,
+          status: {
+            ...issue.fields.status,
+            _status: statuses.find(({ id }) => id === issue.fields.status.id),
+          },
+        },
+      }));
+    }
+
     res.send({
       ...response,
       _project: res.locals.project,

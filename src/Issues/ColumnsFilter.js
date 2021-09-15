@@ -14,7 +14,6 @@ const ColumnsFilter = ({ onChangeFilter, selectedColumns }) => {
           callback: onChangeFilter,
         }))}
         icon={IconFilter}
-        text="Select columns"
         selected={selectedColumns}
       />
     </Wrapper>

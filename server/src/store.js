@@ -7,6 +7,11 @@ const base64Origin = (origin) => Buffer.from(origin).toString("base64");
 
 const getStorageId = (user, origin) => `${user.id}_${base64Origin(origin)}`;
 
+const clearTokenForUser = (user, origin) => {
+  const storageId = getStorageId(user, origin);
+  IN_MEMORY_TOKEN_STORAGE[storageId] = null;
+};
+
 const storeToken = async (user, origin, token) => {
   const encryptedToken = await encryptToken(user, token);
   await saveAuth(user, origin, encryptedToken);
@@ -14,10 +19,10 @@ const storeToken = async (user, origin, token) => {
 
 const getToken = async (user, incomingOrigin) => {
   const storageId = getStorageId(user, incomingOrigin);
-  if (IN_MEMORY_TOKEN_STORAGE[storageId]) {
-    console.log("Got auth from memory");
-    return IN_MEMORY_TOKEN_STORAGE[storageId];
-  }
+  // if (IN_MEMORY_TOKEN_STORAGE[storageId]) {
+  //   console.log("Got auth from memory");
+  //   return IN_MEMORY_TOKEN_STORAGE[storageId];
+  // }
 
   const now = Date.now();
   const { auth, origin, projectId, projectBaseUrl } = await getAuth(
@@ -41,4 +46,4 @@ const getToken = async (user, incomingOrigin) => {
   return response;
 };
 
-module.exports = { storeToken, getToken };
+module.exports = { storeToken, getToken, clearTokenForUser };

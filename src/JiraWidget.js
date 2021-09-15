@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import widgetSDK from "@happeo/widget-sdk";
 
-import { BASE_URL, POPUP_PARAMS } from "./constants";
+import { BASE_URL, POPUP_PARAMS, WIDGET_SETTINGS } from "./constants";
 import { IssueList, LoadingIssues } from "./Issues";
 import { UnauthorizedMessage } from "./StateMessages";
 
@@ -17,7 +17,7 @@ const JiraWidget = ({ id, editMode, query, location }) => {
       const api = await widgetSDK.api.init(id);
       setWidgetApi(api);
       setInitialized(true);
-      api.declareSettings(settings, setSettings);
+      api.declareSettings(WIDGET_SETTINGS, setSettings);
     };
     doInit();
   }, [editMode, id]);
@@ -59,7 +59,7 @@ const JiraWidget = ({ id, editMode, query, location }) => {
     );
   }
 
-  if (!initialized) {
+  if (!initialized || Object.keys(settings).length === 0) {
     return (
       <Container>
         <LoadingIssues />

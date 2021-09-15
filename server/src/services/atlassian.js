@@ -7,7 +7,8 @@ const {
   AUTH_BASE_URL,
   CLIENT_SECRET_KEY,
 } = require("../constants");
-const { storeToken } = require("../store");
+const { storeToken, clearTokenForUser, getToken } = require("../store");
+const { getAuth } = require("./firestore");
 const { getSecret } = require("./secretManager");
 
 let secrets = {
@@ -70,14 +71,31 @@ const useRefreshToken = async (locals) => {
   if (locals.refreshed) {
     throw new Unauthorized("retry_limit_exceeded");
   }
-  console.log(`[Atlassian] Refreshing token for user ${locals.user.id}`);
-  const token = await getNewToken(locals);
-  await storeToken(locals.user, locals.origin, token);
-  return {
-    ...locals,
-    auth: token,
-    refreshed: true,
-  };
+
+  try {
+    console.log(`[Atlassian] Refreshing token for user ${locals.user.id}`);
+    const token = await getNewToken(locals);
+    await storeToken(locals.user, locals.origin, token);
+    clearTokenForUser(locals.user, locals.origin);
+
+    return {
+      ...locals,
+      auth: token,
+      refreshed: true,
+    };
+  } catch (error) {
+    console.error(`Unable to refresh token: ${error.message}`);
+    if (error.message === "invalid_grant") {
+      clearTokenForUser(locals.user, locals.origin);
+      const { token } = await getToken(locals.user, locals.origin);
+      console.log(`Got new token`, token);
+      return {
+        ...locals,
+        auth: token,
+      };
+    }
+    throw error;
+  }
 };
 
 const getAccessibleResources = async (locals) => {
@@ -98,6 +116,40 @@ const getAccessibleResources = async (locals) => {
   if (result.code === 401 && locals.auth.refresh_token) {
     const newLocals = await useRefreshToken(locals);
     return await getAccessibleResources(newLocals);
+  }
+
+  return result;
+};
+
+const getStatuses = async (locals) => {
+  const { auth, project = {} } = locals;
+
+  if (!params.resourceId && !project.projectId) {
+    throw new BadRequest(
+      "missing_parameter: 'resourceId' or prop.projectId not set",
+    );
+  }
+
+  const url = new URL(
+    `${BASE_URL}/ex/jira/${
+      params.resourceId || project.projectId
+    }/rest/api/3/status`,
+  );
+
+  const options = {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${auth.access_token}`,
+      Accept: "application/json",
+    },
+  };
+
+  const response = await fetch(url, options);
+  const result = await response.json();
+
+  if (result.code === 401 && locals.auth.refresh_token) {
+    const newLocals = await useRefreshToken(locals);
+    return await searchWithJql(newLocals, params);
   }
 
   return result;
@@ -193,4 +245,5 @@ module.exports = {
   getAccessibleResources,
   searchWithJql,
   searchSuggestions,
+  getStatuses,
 };

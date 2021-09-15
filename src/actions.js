@@ -20,3 +20,16 @@ export const searchIssues = async (token, params) => {
 
   return result;
 };
+
+export const suggestIssues = async (token, params) => {
+  const result = await get(`${BASE_URL}/api/suggestions`, {
+    params,
+    token,
+  });
+
+  if (result.errors || result.errorMessages) {
+    throw new Error(result.errorMessages);
+  }
+
+  return result;
+};
