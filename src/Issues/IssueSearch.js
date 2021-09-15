@@ -122,8 +122,6 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
     }
   };
 
-  console.log(selectedIndex);
-
   return (
     <>
       {inFocus && (
