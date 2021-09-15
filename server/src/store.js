@@ -3,7 +3,7 @@ const { saveAuth, getAuth } = require("./services/firestore");
 
 const IN_MEMORY_TOKEN_STORAGE = {};
 
-const base64Origin = (origin = Buffer.from(origin).toString("base64"));
+const base64Origin = (origin) => Buffer.from(origin).toString("base64");
 
 const getStorageId = (user, origin) => `${user.id}_${base64Origin(origin)}`;
 
