@@ -7,8 +7,7 @@ const {
   AUTH_BASE_URL,
   CLIENT_SECRET_KEY,
 } = require("../constants");
-const { storeToken, clearTokenForUser, getToken } = require("../store");
-const { getAuth } = require("./firestore");
+const { storeToken } = require("../store");
 const { getSecret } = require("./secretManager");
 
 let secrets = {
@@ -76,7 +75,6 @@ const useRefreshToken = async (locals) => {
     console.log(`[Atlassian] Refreshing token for user ${locals.user.id}`);
     const token = await getNewToken(locals);
     await storeToken(locals.user, locals.origin, token);
-    clearTokenForUser(locals.user, locals.origin);
 
     return {
       ...locals,
@@ -86,13 +84,7 @@ const useRefreshToken = async (locals) => {
   } catch (error) {
     console.error(`Unable to refresh token: ${error.message}`);
     if (error.message === "invalid_grant") {
-      clearTokenForUser(locals.user, locals.origin);
-      const { token } = await getToken(locals.user, locals.origin);
-      console.log(`Got new token`, token);
-      return {
-        ...locals,
-        auth: token,
-      };
+      throw new Unauthorized(error.message);
     }
     throw error;
   }
