@@ -95,7 +95,6 @@
   },
   "dependencies": {
     "@happeo/widget-sdk": "^0.1.21",
-    "lodash.debounce": "^4.0.8",
     "react-lazy-load-image-component": "^1.5.1",
     "react-loading-skeleton": "^2.2.0",
     "react-tooltip": "^4.2.13",

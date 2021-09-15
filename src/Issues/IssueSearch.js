@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { IconButton } from "@happeouikit/buttons";
+import { Tooltip } from "@happeouikit/tooltip";
 import { Input, LinkExternal } from "@happeouikit/form-elements";
 import { IconSearch } from "@happeouikit/icons";
 import styled from "styled-components";
@@ -7,14 +8,16 @@ import { BodyUI } from "@happeouikit/typography";
 import { suggestIssues } from "../actions";
 import { Loader } from "@happeouikit/loaders";
 import { radius300, shadow300 } from "@happeouikit/theme";
-import { margin200, padding200 } from "@happeouikit/layout";
+import { margin200, padding200, padding300 } from "@happeouikit/layout";
+import { warn, active, lighten, alert, gray05 } from "@happeouikit/colors";
 import { toSafeText } from "../utils";
-import { warn, active, lighten, alert } from "@happeouikit/colors";
+import useDebounce from "../useDebounce";
 
 const IssueSearch = ({ widgetApi, rootUrl }) => {
   const autocompleteContainer = useRef();
   const [inFocus, setInFocus] = useState(false);
-  const [query, setQuery] = useState("");
+  const [preQuery, setQuery] = useState("");
+  const query = useDebounce(preQuery, 300);
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -24,16 +27,15 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
   useEffect(() => {
     const doQuery = async () => {
       try {
+        setError(false);
         setLoading(true);
         setSelectedIndex(-1);
         const token = await widgetApi.getJWT();
 
-        const { sections = [] } = await suggestIssues(token, { query });
-        let issueList = [];
-        sections.forEach(({ issues }) => {
-          issueList = [...issueList, ...issues];
+        const { items = [] } = await suggestIssues(token, {
+          query,
         });
-        setIssues(issueList);
+        setIssues(items);
         setShowList(true);
         setLoading(false);
       } catch (error) {
@@ -140,16 +142,38 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
                   isSelected={index === selectedIndex}
                   className={index === selectedIndex ? "selected" : ""}
                 >
-                  <LinkExternal href={`${rootUrl}/browse/${item.key}`}>
-                    {item.img && <IssueImage src={`${rootUrl}${item.img}`} />}
-                    <BodyUI
-                      dangerouslySetInnerHTML={{
-                        __html: toSafeText(item.summary),
-                      }}
-                    ></BodyUI>
+                  <LinkExternal href={item.url}>
+                    {item.icon && <IssueImage src={item.icon} />}
+                    <div>
+                      {item.subtitle && (
+                        <BodyUI
+                          style={{
+                            color: gray05,
+                            marginRight: margin200,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {item.subtitle}
+                        </BodyUI>
+                      )}
+                      <BodyUI
+                        dangerouslySetInnerHTML={{
+                          __html: toSafeText(item.highlightedText),
+                        }}
+                      ></BodyUI>
+                    </div>
                   </LinkExternal>
                 </AutocompleteItem>
               ))}
+              {!loading && (
+                <OpenInJira>
+                  <LinkExternal
+                    href={`${rootUrl}/issues/?jql=text%20~%20"${query}*"%20OR%20summary%20~%20"${query}*"`}
+                  >
+                    <BodyUI>{`Search "${query}" in Jira`}</BodyUI>
+                  </LinkExternal>
+                </OpenInJira>
+              )}
               {loading && <Loader containerHeight="40px" />}
               {error && (
                 <BodyUI style={{ color: alert, padding: padding200 }}>
@@ -161,12 +185,18 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
         </AutocompleteContainer>
       )}
       {!inFocus && (
-        <IconButton
-          icon={IconSearch}
-          onClick={() => {
-            setInFocus(true);
-          }}
-        />
+        <>
+          <IconButton
+            data-for="expand-search"
+            data-tip="Search from Jira"
+            aria-label="Search from Jira"
+            icon={IconSearch}
+            onClick={() => {
+              setInFocus(true);
+            }}
+          />
+          <Tooltip id="expand-search" />
+        </>
       )}
     </>
   );
@@ -207,5 +237,9 @@ const IssueImage = styled.img`
   width: 24px;
   height: 24px;
   margin-right: ${margin200};
+`;
+const OpenInJira = styled.div`
+  padding: ${padding300};
+  text-align: center;
 `;
 export default IssueSearch;
