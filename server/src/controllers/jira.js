@@ -17,9 +17,7 @@ const getIssueStatuses = async (locals) => {
     return statusList;
   } catch (error) {
     console.log(
-      `Unable to list statuses for project: ${
-        locals.project.projectId
-      }. Err: ${JSON.stringify(error)}`,
+      `Unable to list statuses for project: ${locals.project.projectId}. Err: ${error.message}`,
     );
     return [];
   }
@@ -38,7 +36,7 @@ const search = async (req, res, next) => {
   try {
     const { query } = req;
     const response = await searchWithJql(res.locals, query);
-    const statuses = await getIssueStatuses(res.locals);
+    const statuses = await getIssueStatuses(res.locals, query);
 
     if (response.issues) {
       response.issues = response.issues.map((issue) => ({

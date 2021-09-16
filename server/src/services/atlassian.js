@@ -113,7 +113,7 @@ const getAccessibleResources = async (locals) => {
   return result;
 };
 
-const getStatuses = async (locals) => {
+const getStatuses = async (locals, params) => {
   const { auth, project = {} } = locals;
 
   if (!params.resourceId && !project.projectId) {
