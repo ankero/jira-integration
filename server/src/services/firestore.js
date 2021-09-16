@@ -47,13 +47,13 @@ const getStateTokenById = async (id) => {
   }
 };
 
-const saveAuth = async (user, origin, encryptedAuth) => {
+const saveAuth = async (user, origin, encryptedAuth, initialSave) => {
   try {
     const collection = firestore.collection(AUTH_COLLECTION);
     const encodedOrigin = Buffer.from(origin).toString("base64");
     const doc = collection.doc(`${user.id}_${encodedOrigin}`);
     await doc.set(
-      { userId: user.id, origin, auth: encryptedAuth },
+      { userId: user.id, origin, auth: encryptedAuth, initialSave },
       { merge: true },
     );
   } catch (error) {
@@ -67,7 +67,10 @@ const saveProject = async (user, origin, projectId, projectBaseUrl) => {
     const collection = firestore.collection(AUTH_COLLECTION);
     const encodedOrigin = Buffer.from(origin).toString("base64");
     const doc = collection.doc(`${user.id}_${encodedOrigin}`);
-    await doc.set({ projectId, projectBaseUrl }, { merge: true });
+    await doc.set(
+      { projectId, projectBaseUrl, initialSave: false },
+      { merge: true },
+    );
   } catch (error) {
     console.error(error);
     throw error;
@@ -89,6 +92,7 @@ const getAuth = async (user, origin) => {
     throw error;
   }
 };
+
 module.exports = {
   createStateToken,
   getStateTokenById,

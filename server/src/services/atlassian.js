@@ -7,8 +7,9 @@ const {
   AUTH_BASE_URL,
   CLIENT_SECRET_KEY,
 } = require("../constants");
-const { storeToken } = require("../store");
+const { storeToken, getToken } = require("./store");
 const { getSecret } = require("./secretManager");
+const { clearAuthFromCache } = require("./memoryCache");
 
 let secrets = {
   client_id: CLIENT_ID,
@@ -67,14 +68,22 @@ const getNewToken = async ({ auth }) => {
 };
 
 const useRefreshToken = async (locals) => {
+  console.log(`[Atlassian] Clearing tokeng from local cache ${locals.user.id}`);
+  clearAuthFromCache(locals.user, locals.origin);
+
   if (locals.refreshed) {
     throw new Unauthorized("retry_limit_exceeded");
   }
 
   try {
-    console.log(`[Atlassian] Refreshing token for user ${locals.user.id}`);
-    const token = await getNewToken(locals);
-    await storeToken(locals.user, locals.origin, token);
+    console.log(
+      `[Atlassian] Getting latest token from storage ${locals.user.id}`,
+    );
+    const { token: latestToken } = await getToken(locals.user, locals.origin);
+
+    console.log(`[Atlassian] Refreshing token ${locals.user.id}`);
+    const token = await getNewToken({ ...locals, auth: latestToken });
+    await storeToken(locals.user, locals.origin, token, false);
 
     return {
       ...locals,
@@ -113,7 +122,7 @@ const getAccessibleResources = async (locals) => {
   return result;
 };
 
-const getStatuses = async (locals, params) => {
+const getStatuses = async (locals, params = {}) => {
   const { auth, project = {} } = locals;
 
   if (!params.resourceId && !project.projectId) {

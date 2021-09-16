@@ -1,5 +1,5 @@
 const { Unauthorized } = require("http-errors");
-const { getToken } = require("../store");
+const { getToken } = require("../services/store");
 
 const verifyJiraAuth = async (req, res, next) => {
   try {
@@ -15,6 +15,7 @@ const verifyJiraAuth = async (req, res, next) => {
       token,
       projectId,
       projectBaseUrl,
+      initialSave,
     } = await getToken(user, origin);
 
     if (!origin || !token) {
@@ -29,6 +30,10 @@ const verifyJiraAuth = async (req, res, next) => {
 
     if (!access_token && !refresh_token) {
       throw new Unauthorized("authorization_missing");
+    }
+
+    if (initialSave) {
+      throw new Unauthorized("project_not_selected");
     }
 
     res.locals.auth = {

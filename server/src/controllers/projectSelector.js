@@ -1,9 +1,9 @@
 const { verifySharedToken } = require("../services/jwt");
 const { getAccessibleResources } = require("../services/atlassian");
-const { OAUTH_CALLBACK_AFTER_REDIRECT_URL } = require("../constants");
 const { Unauthorized, InternalServerError } = require("http-errors");
-const { getToken } = require("../store");
+const { getToken } = require("../services/store");
 const { saveProject } = require("../services/firestore");
+const { sleep } = require("../services/utils");
 
 /**
  * Callback of Zendesk OAuth process.
@@ -35,11 +35,18 @@ module.exports = async function oauthCallback(req, res) {
     const accessibleResources = resources.map((item) => ({
       ...item,
       selectUrl: `/project-selector?projectId=${item.id}&baseUrl=${item.url}&origin=${origin}&token=${token}`,
-      selected: item.id === projectId,
+      selected: item.id === projectId || resources.length === 1,
     }));
 
+    const onlyOneProject = resources.length === 1;
+
+    if (onlyOneProject) {
+      const singleProject = resources[0];
+      await saveProject(user, origin, singleProject.id, singleProject.url);
+    }
+
     res.status(200).render("project-selector", {
-      projectId,
+      projectId: projectId || (onlyOneProject && resources[0].id),
       accessibleResources,
     });
   } catch (err) {

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { IconButton } from "@happeouikit/buttons";
+import { ButtonSecondary, IconButton } from "@happeouikit/buttons";
 import { Tooltip } from "@happeouikit/tooltip";
 import { Input, LinkExternal } from "@happeouikit/form-elements";
-import { IconSearch } from "@happeouikit/icons";
+import { IconSearch, IconClose } from "@happeouikit/icons";
 import styled from "styled-components";
 import { BodyUI } from "@happeouikit/typography";
 import { suggestIssues } from "../actions";
@@ -132,8 +132,18 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
             icon={IconSearch}
             placeholder="Search"
             onChange={search}
+            value={preQuery}
             autoFocus
+            style={{ paddingRight: "36px" }}
           />
+          {query.length > 0 && (
+            <StyledIconButton
+              icon={IconClose}
+              onClick={() => search({ target: { value: "" } })}
+              aria-label="Clear search"
+            />
+          )}
+
           {showList && (
             <AutocompleteList className="autocomplete-list">
               {issues.map((item, index) => (
@@ -165,7 +175,7 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
                   </LinkExternal>
                 </AutocompleteItem>
               ))}
-              {!loading && (
+              {!loading && query.length > 0 && (
                 <OpenInJira>
                   <LinkExternal
                     href={`${rootUrl}/issues/?jql=text%20~%20"${query}*"%20OR%20summary%20~%20"${query}*"`}
@@ -206,6 +216,13 @@ const AutocompleteContainer = styled.div`
   position: relative;
   width: 280px;
   max-width: 100%;
+`;
+const StyledIconButton = styled(IconButton)`
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  z-index: 1;
 `;
 const AutocompleteList = styled.ul`
   position: absolute;
