@@ -23,6 +23,7 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [error, setError] = useState(false);
   const [showList, setShowList] = useState(false);
+  const blurTimeout = useRef();
 
   useEffect(() => {
     const doQuery = async () => {
@@ -97,8 +98,16 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
     }
 
     function handleClick(event) {
+      clearTimeout(blurTimeout.current);
       if (!el.contains(event.target)) {
         setShowList(false);
+        blurTimeout.current = setTimeout(() => {
+          if (query.length > 0 || inputEl.activeElement) {
+            console.log("input active");
+            return;
+          }
+          setInFocus(false);
+        }, 5000);
         return;
       }
       if (event.target === inputEl) {
@@ -114,6 +123,7 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
       inputEl.removeEventListener("keydown", handleDir);
       inputEl.removeEventListener("focus", handleFocus);
       document.removeEventListener("click", handleClick);
+      clearTimeout(blurTimeout.current);
     };
   }, [query, issues]);
 
@@ -126,74 +136,76 @@ const IssueSearch = ({ widgetApi, rootUrl }) => {
 
   return (
     <>
-      {inFocus && (
-        <AutocompleteContainer ref={autocompleteContainer}>
-          <Input
-            icon={IconSearch}
-            placeholder="Search"
-            onChange={search}
-            value={preQuery}
-            autoFocus
-            style={{ paddingRight: "36px" }}
+      <AutocompleteContainer
+        ref={autocompleteContainer}
+        style={{ display: inFocus ? "block" : "none" }}
+      >
+        <Input
+          icon={IconSearch}
+          placeholder="Search"
+          onChange={search}
+          value={preQuery}
+          autoFocus
+          style={{ paddingRight: "36px" }}
+        />
+        {query.length > 0 && (
+          <StyledIconButton
+            icon={IconClose}
+            onClick={() => search({ target: { value: "" } })}
+            aria-label="Clear search"
           />
-          {query.length > 0 && (
-            <StyledIconButton
-              icon={IconClose}
-              onClick={() => search({ target: { value: "" } })}
-              aria-label="Clear search"
-            />
-          )}
+        )}
 
-          {showList && (
-            <AutocompleteList className="autocomplete-list">
-              {issues.map((item, index) => (
-                <AutocompleteItem
-                  key={item.id}
-                  isSelected={index === selectedIndex}
-                  className={index === selectedIndex ? "selected" : ""}
-                >
-                  <LinkExternal href={item.url}>
-                    {item.icon && <IssueImage src={item.icon} />}
-                    <div>
-                      {item.subtitle && (
-                        <BodyUI
-                          style={{
-                            color: gray05,
-                            marginRight: margin200,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {item.subtitle}
-                        </BodyUI>
-                      )}
+        {showList && (
+          <AutocompleteList className="autocomplete-list">
+            {issues.map((item, index) => (
+              <AutocompleteItem
+                key={item.id}
+                isSelected={index === selectedIndex}
+                className={index === selectedIndex ? "selected" : ""}
+              >
+                <LinkExternal href={item.url}>
+                  {item.icon && <IssueImage src={item.icon} />}
+                  <div>
+                    {item.subtitle && (
                       <BodyUI
-                        dangerouslySetInnerHTML={{
-                          __html: toSafeText(item.highlightedText),
+                        style={{
+                          color: gray05,
+                          marginRight: margin200,
+                          whiteSpace: "nowrap",
                         }}
-                      ></BodyUI>
-                    </div>
-                  </LinkExternal>
-                </AutocompleteItem>
-              ))}
-              {!loading && query.length > 0 && (
-                <OpenInJira>
-                  <LinkExternal
-                    href={`${rootUrl}/issues/?jql=text%20~%20"${query}*"%20OR%20summary%20~%20"${query}*"`}
-                  >
-                    <BodyUI>{`Search "${query}" in Jira`}</BodyUI>
-                  </LinkExternal>
-                </OpenInJira>
-              )}
-              {loading && <Loader containerHeight="40px" />}
-              {error && (
-                <BodyUI style={{ color: alert, padding: padding200 }}>
-                  Unable to search
-                </BodyUI>
-              )}
-            </AutocompleteList>
-          )}
-        </AutocompleteContainer>
-      )}
+                      >
+                        {item.subtitle}
+                      </BodyUI>
+                    )}
+                    <BodyUI
+                      dangerouslySetInnerHTML={{
+                        __html: toSafeText(item.highlightedText),
+                      }}
+                    ></BodyUI>
+                  </div>
+                </LinkExternal>
+              </AutocompleteItem>
+            ))}
+            {!loading && query.length > 0 && (
+              <OpenInJira>
+                <LinkExternal
+                  href={`${rootUrl}/issues/?jql=text%20~%20"${query}*"%20OR%20summary%20~%20"${query}*"`}
+                >
+                  <BodyUI>{`Search "${query}" in Jira`}</BodyUI>
+                </LinkExternal>
+              </OpenInJira>
+            )}
+            {loading && <Loader containerHeight="40px" />}
+            {error && (
+              <BodyUI style={{ color: alert, padding: padding200 }}>
+                Unable to search
+              </BodyUI>
+            )}
+          </AutocompleteList>
+        )}
+      </AutocompleteContainer>
+
       {!inFocus && (
         <>
           <IconButton
